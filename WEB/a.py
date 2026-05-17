@@ -1,0 +1,1 @@
+print('tuan dep chai vaidai')

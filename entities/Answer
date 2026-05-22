@@ -1,0 +1,27 @@
+{
+  "name": "Answer",
+  "type": "object",
+  "properties": {
+    "question_id": {
+      "type": "string",
+      "title": "ID c\u00e2u h\u1ecfi"
+    },
+    "text": {
+      "type": "string",
+      "title": "N\u1ed9i dung c\u00e2u tr\u1ea3 l\u1eddi"
+    },
+    "image_url": {
+      "type": "string",
+      "title": "\u1ea2nh \u0111\u00ednh k\u00e8m"
+    },
+    "report_count": {
+      "type": "number",
+      "title": "S\u1ed1 report",
+      "default": 0
+    }
+  },
+  "required": [
+    "question_id",
+    "text"
+  ]
+}

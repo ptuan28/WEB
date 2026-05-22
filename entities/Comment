@@ -1,0 +1,55 @@
+{
+  "name": "Comment",
+  "type": "object",
+  "properties": {
+    "answer_id": {
+      "type": "string",
+      "title": "ID c\u00e2u tr\u1ea3 l\u1eddi"
+    },
+    "text": {
+      "type": "string",
+      "title": "N\u1ed9i dung b\u00ecnh lu\u1eadn"
+    },
+    "report_count": {
+      "type": "number",
+      "title": "S\u1ed1 report",
+      "default": 0
+    }
+  },
+  "required": [
+    "answer_id",
+    "text"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

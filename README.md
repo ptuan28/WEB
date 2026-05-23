@@ -1,45 +1,57 @@
-**Welcome to your Base44 project** 
+# 🐔 The Chicken's Whisper
 
-**About**
+> **Hỏi bài ẩn danh · Trả lời ẩn danh · Không cần đăng nhập 🤫**
 
-View and Edit  your app on [Base44.com](http://Base44.com) 
+![Demo](assets/demo.png)
 
-This project contains everything you need to run your app locally.
+## 🌐 Demo trực tuyến
 
-**Edit the code in your local development environment**
+👉 **Dùng thử ngay — không cần đăng ký!**
 
-Any change pushed to the repo will also be reflected in the Base44 Builder.
+---
 
-**Prerequisites:** 
+## 🛠️ Tech Stack
 
-1. Clone the repository using the project's Git URL 
-2. Navigate to the project directory
-3. Install dependencies: `npm install`
-4. Create an `.env.local` file and set the right environment variables
+| Layer     | Công nghệ                            |
+|-----------|--------------------------------------|
+| Frontend  | React 18, Vite, Tailwind CSS         |
+| UI        | shadcn/ui, Lucide React              |
+| Backend   | Base44 BaaS                          |
+| Auth      | Base44 Auth                          |
+| Storage   | Base44 Entity DB + localStorage      |
+| File      | Base44 File Upload                   |
 
+---
+
+## 🚀 Chạy dự án
+
+**Bước 1 — Clone**
+```bash
+git clone https://github.com/ptuan28/WEB.git
+cd WEB
+```
+
+**Bước 2 — Cài dependencies**
+```bash
+npm install
+```
+
+**Bước 3 — Cấu hình môi trường**
+
+Tạo file `.env.local`:
 ```
 VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=your_backend_url
-
-e.g.
-VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
-VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
+VITE_BASE44_APP_BASE_URL=https://api.base44.com
+VITE_BASE44_API_KEY=your_api_key
 ```
 
-Run the app: `npm run dev`
+**Bước 4 — Chạy**
+```bash
+npm run dev
+# Mở trình duyệt tại http://localhost:5173
+```
 
-**Publish your changes**
-
-Open [Base44.com](http://Base44.com) and click on Publish.
-
-**Docs & Support**
-
-
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
-
-Support: [https://app.base44.com/support](https://app.base44.com/support)
-
-
+---
 
 ## 📁 Cấu trúc dự án
 
@@ -62,15 +74,9 @@ PROJECT/
 │   │   ├── anonymousUser.js      # Tạo danh tính ẩn danh
 │   │   ├── userHistory.js        # Lưu lịch sử localStorage
 │   │   └── schoolData.js         # Dữ liệu trường/ngành VN
-│   ├── entities/
-│   │   ├── Question.json
-│   │   ├── Answer.json
-│   │   ├── Comment.json
-│   │   └── Notification.json
 │   └── api/
 │       └── base44Client.js       # Khởi tạo Base44 SDK
-├── .env                          # Biến môi trường (không commit)
-├── .env.example
+├── .env.local                    # Biến môi trường (không commit)
 └── README.md
 ```
 
@@ -78,394 +84,182 @@ PROJECT/
 
 ## 🗂️ UML & Kiến trúc hệ thống
 
-### Entity Diagram
+### 1. Entity Diagram (Class Diagram)
 
-```
-User (1) ──────────────────────────────────── (∞) Question
-                                                      │
-                                                      │ (1)
-                                                      │
-                                                     (∞)
-                                                   Answer (1) ──── (∞) Comment
-                                                      │
-                                                      └──────────────▶ Notification
-```
+```mermaid
+classDiagram
+    class User {
+        +id
+        +email
+        +full_name
+        +role
+    }
+    class Question {
+        +id
+        +text
+        +image_url
+        +school
+        +major
+        +cohort
+        +subject
+        +report_count
+        +created_by
+    }
+    class Answer {
+        +id
+        +question_id
+        +text
+        +image_url
+        +report_count
+        +created_by
+    }
+    class Comment {
+        +id
+        +answer_id
+        +text
+        +report_count
+        +created_by
+    }
+    class Notification {
+        +id
+        +user_email
+        +type
+        +question_id
+        +message
+        +read
+    }
 
-1. 🗂️ UML - Sơ đồ Class (Entity Diagram)
-┌─────────────────┐       ┌─────────────────┐
-│     User        │       │    Question     │
-├─────────────────┤       ├─────────────────┤
-│ id              │ 1──∞  │ id              │
-│ email           │──────▶│ text            │
-│ full_name       │       │ image_url       │
-│ role            │       │ school          │
-└─────────────────┘       │ major           │
-                          │ cohort          │
-                          │ subject         │
-                          │ report_count    │
-                          │ created_by(email)│
-                          └────────┬────────┘
-                                   │ 1
-                                   │
-                                   ∞
-                          ┌────────▼────────┐       ┌─────────────────┐
-                          │     Answer      │ 1──∞  │    Comment      │
-                          ├─────────────────┤──────▶├─────────────────┤
-                          │ id              │       │ id              │
-                          │ question_id(FK) │       │ answer_id(FK)   │
-                          │ text            │       │ text            │
-                          │ image_url       │       │ report_count    │
-                          │ report_count    │       │ created_by      │
-                          │ created_by      │       └─────────────────┘
-                          └─────────────────┘
-
-                          ┌─────────────────────┐
-                          │    Notification     │
-                          ├─────────────────────┤
-                          │ id                  │
-                          │ user_email (FK)     │
-                          │ type (answer/comment│
-                          │ question_id (FK)    │
-                          │ message             │
-                          │ read (boolean)      │
-                          └─────────────────────┘
-2.🔄 UML - Sơ đồ Use Case
-                    ┌─────────────────────────────────────────┐
-                    │           The Chicken's Whisper         │
-                    │                                         │
-  ┌──────────┐      │  ┌──────────────────────────────────┐   │
-  │          │──────┼─▶│ Xem danh sách câu hỏi            │   │
-  │          │      │  └──────────────────────────────────┘   │
-  │          │      │  ┌──────────────────────────────────┐   │
-  │  Khách   │──────┼─▶│ Tìm kiếm / Lọc câu hỏi          │   │
-  │ (ẩn danh)│      │  └──────────────────────────────────┘   │
-  │          │      │  ┌──────────────────────────────────┐   │
-  │          │──────┼─▶│ Đặt câu hỏi (ẩn danh)           │   │
-  │          │      │  └──────────────────────────────────┘   │
-  │          │      │  ┌──────────────────────────────────┐   │
-  │          │──────┼─▶│ Trả lời câu hỏi (ẩn danh)       │   │
-  └──────────┘      │  └──────────────────────────────────┘   │
-                    │  ┌──────────────────────────────────┐   │
-  ┌──────────┐      │  │ Bình luận vào câu trả lời        │   │
-  │          │──────┼─▶└──────────────────────────────────┘   │
-  │  User    │      │  ┌──────────────────────────────────┐   │
-  │ (đăng   │──────┼─▶│ Report nội dung xấu              │   │
-  │  nhập)  │      │  └──────────────────────────────────┘   │
-  │          │      │  ┌──────────────────────────────────┐   │
-  │          │──────┼─▶│ Nhận thông báo (🔔)              │   │
-  │          │      │  └──────────────────────────────────┘   │
-  │          │      │  ┌──────────────────────────────────┐   │
-  │          │──────┼─▶│ Xem lịch sử hoạt động            │   │
-  └──────────┘      │  └──────────────────────────────────┘   │
-                    │  ┌──────────────────────────────────┐   │
-  ┌──────────┐      │  │ Xóa nội dung vi phạm             │   │
-  │  Admin   │──────┼─▶│ (auto khi report ≥ 5)            │   │
-  └──────────┘      │  └──────────────────────────────────┘   │
-                    └─────────────────────────────────────────┘
-3. 🔁 UML - Sơ đồ Sequence (Luồng đặt câu hỏi & trả lời)
-User A          Frontend         Base44 API        User B (chủ câu hỏi)
-  │                │                  │                    │
-  │──[Đặt câu hỏi]▶│                  │                    │
-  │                │──POST Question──▶│                    │
-  │                │◀──Question saved─│                    │
-  │                │                  │                    │
-  │                                   │                    │
-User C (người trả lời)                │                    │
-  │                │                  │                    │
-  │──[Trả lời]────▶│                  │                    │
-  │                │──POST Answer────▶│                    │
-  │                │──POST Notification (to User B)───────▶│
-  │                │◀──Saved──────────│                    │
-  │                │                  │                    │
-  │                │                  │         [🔔 Nhận thông báo]
-  │                │                  │                    │
-  │                │                  │◀──GET Notifications│
-  │                │                  │────────────────────▶
-  4. 🏗️ Sơ đồ Nguyên lý (System Architecture)
-┌─────────────────────────────────────────────────────────┐
-│                    FRONTEND (React + Vite)               │
-│                                                         │
-│  ┌──────────┐  ┌──────────────┐  ┌──────────────────┐  │
-│  │  Home    │  │QuestionDetail│  │   MyHistory      │  │
-│  │  Page    │  │    Page      │  │     Page         │  │
-│  └────┬─────┘  └──────┬───────┘  └────────┬─────────┘  │
-│       │               │                    │            │
-│  ┌────▼───────────────▼────────────────────▼──────────┐ │
-│  │              Components Layer                      │ │
-│  │  QuestionCard │ AnswerCard │ CommentSection        │ │
-│  │  FilterBar    │ AskModal   │ NotificationBell      │ │
-│  │  ImageCapture │ ...                                │ │
-│  └────────────────────────┬───────────────────────────┘ │
-│                           │                             │
-│  ┌────────────────────────▼───────────────────────────┐ │
-│  │              Lib / Utils Layer                     │ │
-│  │  anonymousUser.js  │  userHistory.js (localStorage)│ │
-│  │  schoolData.js     │  base44Client.js              │ │
-│  └────────────────────────┬───────────────────────────┘ │
-└───────────────────────────┼─────────────────────────────┘
-                            │ HTTP / REST
-                            ▼
-┌─────────────────────────────────────────────────────────┐
-│                  BASE44 BACKEND (BaaS)                   │
-│                                                         │
-│  ┌─────────────┐  ┌──────────┐  ┌────────────────────┐ │
-│  │  Auth API   │  │Entity API│  │  Integrations API  │ │
-│  │ (login/me)  │  │ (CRUD)   │  │  (LLM, UploadFile) │ │
-│  └─────────────┘  └────┬─────┘  └────────────────────┘ │
-│                        │                                │
-│  ┌─────────────────────▼──────────────────────────────┐ │
-│  │                  Database                          │ │
-│  │  Question │ Answer │ Comment │ Notification │ User │ │
-│  └────────────────────────────────────────────────────┘ │
-│                                                         │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │            RLS (Row Level Security)              │  │
-│  │  Notification: chỉ đọc/sửa được của chính mình  │  │
-│  │  Comment: chỉ xóa của chính mình hoặc admin     │  │
-│  └──────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────┘
-5. 🖼️ UI/UX Flow (User Journey)
-[Trang chủ /]
-     │
-     ├──▶ Xem danh sách câu hỏi
-     │         │
-     │         ├──▶ [Tìm kiếm / Lọc theo trường, ngành, khóa, môn]
-     │         │
-     │         └──▶ [Click vào câu hỏi] ──▶ /question/:id
-     │                                           │
-     │                                           ├──▶ Xem câu trả lời
-     │                                           ├──▶ Viết câu trả lời
-     │                                           ├──▶ Bình luận
-     │                                           └──▶ Report nội dung
-     │
-     ├──▶ [Nút "Hỏi ngay"] ──▶ Modal đặt câu hỏi
-     │                              │
-     │                              ├── Nhập nội dung câu hỏi
-     │                              ├── Chọn trường / ngành / khóa / môn
-     │                              ├── (tùy chọn) Đính kèm ảnh
-     │                              └── Submit ──▶ Lưu vào DB
-     │
-     ├──▶ [🔔 Notification Bell] ──▶ Dropdown thông báo
-     │                                    │
-     │                                    └──▶ Click ──▶ /question/:id
-     │
-     └──▶ [Lịch sử] ──▶ /history
-                             │
-                             ├──▶ Tab "Câu hỏi của tôi"
-                             └──▶ Tab "Câu trả lời của tôi"
-6. 🔐 Luồng Bảo mật (RLS Logic)
-Request từ Client
-       │
-       ▼
-  Có token? ──No──▶ Chỉ được READ công khai
-       │
-      Yes
-       │
-       ▼
-  Kiểm tra RLS của Entity
-       │
-       ├── Notification:
-       │     READ/UPDATE/DELETE: data.user_email == user.email
-       │                         HOẶC role == admin
-       │
-       ├── Comment:
-       │     UPDATE/DELETE: created_by == user.email
-       │                    HOẶC role == admin
-       │
-       └── Question/Answer:
-             Report auto-delete khi report_count >= 5
-### Chi tiết Entity
-
-| Entity       | Thuộc tính chính                                              |
-|--------------|---------------------------------------------------------------|
-| Question     | text, image_url, school, major, cohort, subject, report_count |
-| Answer       | question_id, text, image_url, report_count                    |
-| Comment      | answer_id, text, report_count                                 |
-| Notification | user_email, type, question_id, message, read                  |
-
-### System Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    FRONTEND (React + Vite)               │
-│                                                         │
-│   Pages: Home │ QuestionDetail │ MyHistory              │
-│                                                         │
-│   Components: QuestionCard │ AnswerCard │ CommentSection │
-│               FilterBar │ AskModal │ NotificationBell   │
-│                                                         │
-│   Libs: anonymousUser │ userHistory │ schoolData        │
-└───────────────────────────┬─────────────────────────────┘
-                            │ HTTP / REST
-                            ▼
-┌─────────────────────────────────────────────────────────┐
-│                  BASE44 BACKEND (BaaS)                   │
-│                                                         │
-│   Auth API │ Entity CRUD API │ Integrations API         │
-│                                                         │
-│   Database: Question │ Answer │ Comment │ Notification  │
-│                                                         │
-│   RLS: Row Level Security theo user.email & role        │
-└─────────────────────────────────────────────────────────┘
+    User "1" --> "*" Question
+    Question "1" --> "*" Answer
+    Answer "1" --> "*" Comment
+    Answer "1" --> "*" Notification
 ```
 
----
+### 2. Use Case Diagram
 
-## 🖼️ UI/UX Flow
+```mermaid
+flowchart LR
+    Guest([👤 Khách ẩn danh])
+    User([👤 User đăng nhập])
+    Admin([👤 Admin])
 
+    subgraph App["The Chicken's Whisper"]
+        UC1[Xem danh sách câu hỏi]
+        UC2[Tìm kiếm / Lọc câu hỏi]
+        UC3[Đặt câu hỏi ẩn danh]
+        UC4[Trả lời câu hỏi ẩn danh]
+        UC5[Bình luận vào câu trả lời]
+        UC6[Report nội dung xấu]
+        UC7[Nhận thông báo 🔔]
+        UC8[Xem lịch sử hoạt động]
+        UC9[Xóa nội dung vi phạm]
+    end
+
+    Guest --> UC1
+    Guest --> UC2
+    Guest --> UC3
+    Guest --> UC4
+    User --> UC5
+    User --> UC6
+    User --> UC7
+    User --> UC8
+    Admin --> UC9
 ```
-[Trang chủ /]
-     ├──▶ Tìm kiếm / Lọc câu hỏi
-     ├──▶ [Click câu hỏi] ──▶ /question/:id
-     │         ├──▶ Xem câu trả lời
-     │         ├──▶ Viết câu trả lời
-     │         └──▶ Bình luận / Report
-     ├──▶ [Hỏi ngay] ──▶ Modal đặt câu hỏi
-     ├──▶ [🔔] ──▶ Dropdown thông báo
-     └──▶ [Lịch sử] ──▶ /history
+
+### 3. Sequence Diagram (Luồng đặt câu hỏi & trả lời)
+
+```mermaid
+sequenceDiagram
+    participant A as User A
+    participant FE as Frontend
+    participant API as Base44 API
+    participant B as User B (chủ câu hỏi)
+
+    A->>FE: Đặt câu hỏi
+    FE->>API: POST Question
+    API-->>FE: Question saved
+
+    Note over A,B: User C trả lời
+
+    A->>FE: Trả lời câu hỏi
+    FE->>API: POST Answer
+    FE->>API: POST Notification (to User B)
+    API-->>FE: Saved
+    B->>API: GET Notifications
+    API-->>B: 🔔 Nhận thông báo
+```
+
+### 4. System Architecture
+
+```mermaid
+flowchart TB
+    subgraph FE["FRONTEND (React + Vite)"]
+        Pages["Pages: Home | QuestionDetail | MyHistory"]
+        Components["Components: QuestionCard | AnswerCard | CommentSection\nFilterBar | AskModal | NotificationBell"]
+        Libs["Libs: anonymousUser | userHistory | schoolData"]
+    end
+
+    subgraph BE["BASE44 BACKEND (BaaS)"]
+        Auth["Auth API"]
+        Entity["Entity CRUD API"]
+        Integration["Integrations API"]
+        DB["Database: Question | Answer | Comment | Notification"]
+        RLS["RLS: Row Level Security"]
+    end
+
+    FE -->|HTTP / REST| BE
+```
+
+### 5. UI/UX Flow
+
+```mermaid
+flowchart TD
+    Home["🏠 Trang chủ /"]
+    Home --> Filter["Tìm kiếm / Lọc"]
+    Home --> Detail["/question/:id"]
+    Home --> Modal["Modal đặt câu hỏi"]
+    Home --> Bell["🔔 Thông báo"]
+    Home --> History["/history"]
+
+    Detail --> ViewAnswer["Xem câu trả lời"]
+    Detail --> WriteAnswer["Viết câu trả lời"]
+    Detail --> Comment["Bình luận / Report"]
+
+    History --> MyQ["Tab: Câu hỏi của tôi"]
+    History --> MyA["Tab: Câu trả lời của tôi"]
 ```
 
 ---
 
 ## 🔐 Bảo mật
 
-| Thao tác           | Điều kiện                              |
-|--------------------|----------------------------------------|
-| Tạo câu hỏi/trả lời | Đã đăng nhập                          |
-| Đọc Notification   | `user_email == user.email` hoặc admin  |
-| Xóa Comment        | `created_by == user.email` hoặc admin  |
-| Auto-xóa nội dung  | `report_count >= 5`                    |
+| Thao tác             | Điều kiện                              |
+|----------------------|----------------------------------------|
+| Tạo câu hỏi/trả lời  | Đã đăng nhập                           |
+| Đọc Notification     | `user_email == user.email` hoặc admin  |
+| Xóa Comment          | `created_by == user.email` hoặc admin  |
+| Auto-xóa nội dung    | `report_count >= 5`                    |
 
 ---
 
-## 🛠️ Tech Stack
+## 🧠 Kỹ thuật OOP trong dự án
 
-| Layer     | Công nghệ                          |
-|-----------|------------------------------------|
-| Frontend  | React 18, Vite, Tailwind CSS        |
-| UI        | shadcn/ui, Lucide React             |
-| Backend   | Base44 BaaS                        |
-| Auth      | Base44 Auth                        |
-| Storage   | Base44 Entity DB + localStorage    |
-| File      | Base44 File Upload                 |
+Dù dùng React (functional), dự án vẫn thể hiện rõ các nguyên lý OOP:
+
+**1. Đóng gói (Encapsulation)**
+Mỗi component quản lý state và logic riêng. Ví dụ: `AnswerCard` đóng gói logic report, xóa bên trong — bên ngoài chỉ cần truyền `answer` và `onDelete`.
+
+**2. Trừu tượng hóa (Abstraction)**
+`anonymousUser.js`, `userHistory.js`, `schoolData.js` trừu tượng hóa logic phức tạp thành các hàm đơn giản. Component cha không cần biết bên trong hoạt động thế nào.
+
+**3. Tái sử dụng (Reusability)**
+`NotificationBell` dùng ở cả `Home` và `QuestionDetail`. `ImageCapture` dùng ở cả modal hỏi và form trả lời. `getAnonIdentity` dùng ở nhiều component.
+
+**4. Kết hợp (Composition)**
+`QuestionDetail` → `AnswerCard` → `CommentSection`. Các component nhỏ lắp ghép thành UI phức tạp, thay vì kế thừa (inheritance).
 
 ---
 
 ## 📄 License
-MIT © 2024 The Chicken's Whisper Team
 
-✅ Checklist để đạt tiêu chí
-1. 📂 Mã nguồn mở — Đẩy lên GitHub public
-# Khởi tạo git (nếu chưa có)
-git init
-
-# Thêm tất cả file
-git add .
-
-# Commit đầu tiên
-git commit -m "🐔 Initial commit - The Chicken's Whisper"
-
-# Tạo repo trên GitHub rồi push
-git remote add origin https://github.com/ptun28/WEB.git
-git branch -M main
-git push -u origin main
-⚠️ Nhớ thêm .env vào .gitignore để không lộ API key!
-
-# .gitignore
-echo ".env" >> .gitignore
-2. 📝 Đầy đủ mô tả — File .env.example
-Tạo file .env.example (commit file này lên GitHub):
-
-# .env.example
-VITE_BASE44_APP_ID=your_app_id_here
-VITE_BASE44_APP_OWNER=your_app_owner_here
-VITE_BASE44_APP_BASE_URL=https://your-app.base44.app
-3. ▶️ Hoạt động tốt — Hướng dẫn chạy rõ ràng trong README
-## 🚀 Chạy dự án
-
-### Bước 1 — Clone
-```bash
-git clone https://github.com/ptun28/chickens-whisper.git
-cd chickens-whisper
-Bước 2 — Cài dependencies
-npm install
-Bước 3 — Cấu hình môi trường
-cp .env.example .env
-# Mở file .env và điền thông tin thật vào
-Bước 4 — Chạy
-npm run dev
-# Mở trình duyệt tại http://localhost:5173
-
----
-
-### 4. 🔗 Demo link hoạt động
-
-Thêm vào đầu README:
-
-```markdown
-## 🌐 Demo trực tuyến
-
-👉 **[https://chickens-whisper.base44.app](https://chickens-whisper.base44.app)**
-
-> Dùng thử ngay — không cần đăng ký!
-5. 📸 Screenshot trong README (điểm cộng)
-![Demo](assets/demo.png)
-## 📸 Giao diện
-
-### Trang chủ
-![Home](./screenshots/home.png)
-
-### Chi tiết câu hỏi
-![Detail](./screenshots/detail.png)
-Chụp màn hình app → lưu vào thư mục screenshots/ → push lên GitHub.
-
-🗂️ Cấu trúc GitHub repo lý tưởng
-chickens-whisper/
-├── src/                  ✅ Toàn bộ source code
-├── screenshots/          ✅ Ảnh demo
-├── .env.example          ✅ Mẫu biến môi trường
-├── .gitignore            ✅ Ẩn .env thật
-├── README.md             ✅ Mô tả đầy đủ
-└── package.json          ✅ Dependencies rõ ràng
-
-
-###Phân Tích , sử dụng , đề cập đến các kỹ thuật OOP
-1. 📦 Đóng gói (Encapsulation)
-Phân tích & Sử dụng:
-
-Mỗi React component trong dự án (ví dụ: QuestionCard, AnswerCard, NotificationBell, CommentSection) có thể được coi là một đối tượng riêng biệt.
-
-Dữ liệu (State & Props): Mỗi component quản lý dữ liệu riêng của nó (state) và nhận dữ liệu từ bên ngoài (props). Dữ liệu này được "đóng gói" bên trong component, không thể truy cập trực tiếp từ bên ngoài nếu không thông qua props.
-Ví dụ: AnswerCard nhận answer và questionCreatedBy làm props. CommentSection nhận comments, answerId, v.v.
-Hành vi (Methods/Functions): Logic và hành vi của component (ví dụ: handleReport trong AnswerCard, handleSubmit trong CommentSection) cũng được đóng gói bên trong nó.
-Đề cập: Nguyên lý đóng gói giúp giữ cho code gọn gàng, dễ quản lý và giảm thiểu tác động khi có thay đổi. Mỗi component là một "hộp đen" với giao diện rõ ràng (props) và logic nội bộ riêng.
-
-2. 🧩 Trừu tượng hóa (Abstraction) & Tính mô-đun (Modularity/Composition)
-Phân tích & Sử dụng:
-
-Dự án này được xây dựng từ nhiều component nhỏ hơn, mỗi component giải quyết một phần nhỏ của vấn đề và cung cấp một giao diện trừu tượng cho các component khác sử dụng. Thay vì tạo ra một class lớn, chúng ta kết hợp (compose) các component nhỏ hơn.
-
-Tính mô-đun: Các file như anonymousUser.js hay schoolData.js là các module trừu tượng hóa logic phức tạp hoặc dữ liệu thành các hàm dễ sử dụng.
-Trừu tượng hóa component:
-QuestionDetail sử dụng AnswerCard để hiển thị mỗi câu trả lời. QuestionDetail không cần biết AnswerCard hoạt động bên trong như thế nào, chỉ cần truyền props cần thiết.
-AnswerCard lại sử dụng CommentSection để quản lý bình luận. AnswerCard cũng không cần biết chi tiết bên trong của CommentSection.
-Các component UI dùng chung (Button, Dialog, Input, v.v. từ shadcn/ui) là ví dụ điển hình của trừu tượng hóa, nơi chúng ta sử dụng lại các "đối tượng" UI mà không cần quan tâm đến cách chúng được render hay xử lý sự kiện.
-Đề cập: Việc chia nhỏ ứng dụng thành các component và module nhỏ giúp chúng ta trừu tượng hóa các chi tiết phức tạp, làm cho code dễ đọc, dễ bảo trì và dễ mở rộng hơn. Nó thể hiện tính composition over inheritance (ưu tiên kết hợp hơn kế thừa), một triết lý thiết kế mạnh mẽ trong lập trình hiện đại.
-
-3. ♻️ Tái sử dụng (Reusability)
-Phân tích & Sử dụng:
-
-Các component và hàm tiện ích được thiết kế để có thể tái sử dụng ở nhiều nơi khác nhau trong ứng dụng, giảm thiểu việc lặp code.
-
-NotificationBell: Có thể được sử dụng ở bất kỳ trang nào cần hiển thị thông báo.
-ImageCapture: Dùng cho cả AskQuestionModal (khi đặt câu hỏi) và QuestionDetail (khi trả lời).
-getAnonIdentity (từ lib/anonymousUser.js): Một hàm tiện ích được sử dụng rộng rãi bởi QuestionDetail, AnswerCard, CommentSection để tạo danh tính ẩn danh.
-Đề cập: Khả năng tái sử dụng là một lợi ích lớn của thiết kế hướng đối tượng/component, giúp tăng hiệu suất phát triển và đảm bảo tính nhất quán trong ứng dụng.
-
-Kết luận
-Dự án The Chicken's Whisper chứng minh việc phân tích, sử dụng và đề cập đến các kỹ thuật OOP thông qua cách tổ chức code thành các React component:
-
-Mỗi component hành xử như một đối tượng, đóng gói dữ liệu và logic riêng.
-Ứng dụng được xây dựng bằng cách kết hợp các component nhỏ hơn, thể hiện tính mô-đun và trừu tượng hóa.
-Các component và hàm tiện ích được thiết kế để tái sử dụng, giảm lặp code và tăng hiệu quả.
-Điều này phù hợp với tiêu chí của bạn về việc áp dụng các kỹ thuật thiết kế tốt trong lập trình.
+MIT © 2025 The Chicken's Whisper Team

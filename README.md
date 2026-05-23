@@ -1,5 +1,13 @@
 # 🐔 The Chicken's Whisper
 
+
+![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react)
+![Vite](https://img.shields.io/badge/Vite-6-646CFF?style=for-the-badge&logo=vite)
+![TailwindCSS](https://img.shields.io/badge/Tailwind-CSS-38BDF8?style=for-the-badge&logo=tailwindcss)
+![Base44](https://img.shields.io/badge/Base44-BaaS-orange?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+![Platform](https://img.shields.io/badge/Platform-Web-blue?style=for-the-badge)
+
 > **Hỏi bài ẩn danh · Trả lời ẩn danh · Không cần đăng nhập 🤫**
 
 ![Demo](assets/demo.png)

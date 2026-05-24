@@ -1,4 +1,5 @@
-﻿import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { AuthProvider } from './lib/AuthContext';
 import Home from './pages/Home.jsx';
 import MyHistory from './pages/MyHistory.jsx';
@@ -15,6 +16,7 @@ function App() {
           <Route path='*' element={<Navigate to='/' />} />
         </Routes>
       </BrowserRouter>
+      <Analytics />
     </AuthProvider>
   );
 }

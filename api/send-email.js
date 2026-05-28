@@ -1,15 +1,24 @@
 ﻿import { Resend } from 'resend';
 
+export const config = {
+  api: {
+    bodyParser: true,
+  },
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  console.log('Body received:', JSON.stringify(req.body));
+  let body = req.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch (e) { body = {}; }
+  }
 
-  const title = req.body?.title ?? 'No title';
-  const description = req.body?.description ?? 'No description';
-  const userEmail = req.body?.userEmail ?? 'Anonymous';
+  const title = body?.title || 'No title';
+  const description = body?.description || 'No description';
+  const userEmail = body?.userEmail || 'Anonymous';
 
   const resend = new Resend(process.env.VITE_RESEND_API_KEY);
 

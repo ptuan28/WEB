@@ -77,6 +77,7 @@ export default function BugReport() {
             title: title.trim(),
             description: description.trim(),
             userEmail: user?.email || 'An danh',
+            fileUrl: attachedFile?.url || null,
           }),
         });
       } catch (emailError) {

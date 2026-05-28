@@ -19,6 +19,7 @@ export default async function handler(req, res) {
   const title = body?.title || 'No title';
   const description = body?.description || 'No description';
   const userEmail = body?.userEmail || 'Anonymous';
+  const fileUrl = body?.fileUrl || null;
 
   const resend = new Resend(process.env.VITE_RESEND_API_KEY);
 
@@ -31,7 +32,8 @@ export default async function handler(req, res) {
         <p><b>Tieu de:</b> ${title}</p>
         <p><b>Mo ta:</b> ${description}</p>
         <p><b>Nguoi gui:</b> ${userEmail}</p>
-        <p><b>Thoi gian:</b> ${new Date().toLocaleString('vi-VN')}</p>`,
+        <p><b>Thoi gian:</b> ${new Date().toLocaleString('vi-VN')}</p>
+        ${fileUrl ? `<p><b>Anh dinh kem:</b> <a href="${fileUrl}">${fileUrl}</a></p><br/><img src="${fileUrl}" style="max-width:500px;border:1px solid #ccc;" />` : ''}`,
     });
     return res.status(200).json(data);
   } catch (error) {

@@ -5,7 +5,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { title, description, userEmail } = req.body;
+  console.log('Body received:', JSON.stringify(req.body));
+
+  const title = req.body?.title ?? 'No title';
+  const description = req.body?.description ?? 'No description';
+  const userEmail = req.body?.userEmail ?? 'Anonymous';
 
   const resend = new Resend(process.env.VITE_RESEND_API_KEY);
 
@@ -13,7 +17,7 @@ export default async function handler(req, res) {
     const data = await resend.emails.send({
       from: 'onboarding@resend.dev',
       to: 'fantuan0203@gmail.com',
-      subject: `[Bug Report] ${title || 'No title'}`,
+      subject: `[Bug Report] ${title}`,
       html: `<h2>Bug Report - The Chicken Whisper</h2>
         <p><b>Tieu de:</b> ${title}</p>
         <p><b>Mo ta:</b> ${description}</p>

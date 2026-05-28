@@ -72,7 +72,7 @@ export default function BugReport() {
 
 // Gửi email thông báo cho admin
       try {
-        await fetch('https://api.resend.com/emails', {
+        await fetch('/api/send-email', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${import.meta.env.VITE_RESEND_API_KEY}`,

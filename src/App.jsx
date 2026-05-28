@@ -10,14 +10,18 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path='/' element={<Home />} />
-          <Route path='/history' element={<MyHistory />} />
-          <Route path='/question/:questionId' element={<QuestionDetail />} />
-          <Route path='/bug-report' element={<BugReport />} />
-          <Route path='*' element={<Navigate to='/' />} />
-        </Routes>
-        <Footer />
+        <div className='min-h-screen flex flex-col bg-[#FFFDF5]'>
+          <main className='flex-1'>
+            <Routes>
+              <Route path='/' element={<Home />} />
+              <Route path='/history' element={<MyHistory />} />
+              <Route path='/question/:questionId' element={<QuestionDetail />} />
+              <Route path='/bug-report' element={<BugReport />} />
+              <Route path='*' element={<Navigate to='/' />} />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
       </BrowserRouter>
     </AuthProvider>
   );

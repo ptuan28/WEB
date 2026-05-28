@@ -1,0 +1,35 @@
+{
+  "name": "Answer",
+  "type": "object",
+  "properties": {
+    "question_id": {
+      "type": "string",
+      "title": "ID câu hỏi"
+    },
+    "text": {
+      "type": "string",
+      "title": "Nội dung câu trả lời"
+    },
+    "image_url": {
+      "type": "string",
+      "title": "Ảnh đính kèm"
+    },
+    "file_url": {
+      "type": "string",
+      "title": "File đính kèm (URL)"
+    },
+    "file_name": {
+      "type": "string",
+      "title": "Tên file đính kèm"
+    },
+    "report_count": {
+      "type": "number",
+      "title": "Số report",
+      "default": 0
+    }
+  },
+  "required": [
+    "question_id",
+    "text"
+  ]
+}

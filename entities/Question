@@ -1,0 +1,38 @@
+{
+  "name": "Question",
+  "type": "object",
+  "properties": {
+    "text": {
+      "type": "string",
+      "title": "N\u1ed9i dung c\u00e2u h\u1ecfi"
+    },
+    "image_url": {
+      "type": "string",
+      "title": "\u1ea2nh \u0111\u00ednh k\u00e8m"
+    },
+    "school": {
+      "type": "string",
+      "title": "Tr\u01b0\u1eddng"
+    },
+    "major": {
+      "type": "string",
+      "title": "Ng\u00e0nh"
+    },
+    "cohort": {
+      "type": "string",
+      "title": "Kh\u00f3a ng\u00e0nh"
+    },
+    "subject": {
+      "type": "string",
+      "title": "M\u00f4n h\u1ecdc"
+    },
+    "report_count": {
+      "type": "number",
+      "title": "S\u1ed1 report",
+      "default": 0
+    }
+  },
+  "required": [
+    "text"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "title": "Email ng\u01b0\u1eddi nh\u1eadn"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "answer",
+        "comment"
+      ],
+      "title": "Lo\u1ea1i th\u00f4ng b\u00e1o"
+    },
+    "question_id": {
+      "type": "string",
+      "title": "ID c\u00e2u h\u1ecfi"
+    },
+    "message": {
+      "type": "string",
+      "title": "N\u1ed9i dung th\u00f4ng b\u00e1o"
+    },
+    "read": {
+      "type": "boolean",
+      "title": "\u0110\u00e3 \u0111\u1ecdc",
+      "default": false
+    }
+  },
+  "required": [
+    "user_email",
+    "type",
+    "question_id",
+    "message"
+  ]
+}

@@ -70,15 +70,6 @@ export default function BugReport() {
         saveMyBugReport(report.id);
       }
 
-      // 3. Send Notification to Admin
-      const adminEmail = appPublicSettings?.created_by || 'admin@thechickenswhisper.com';
-      await base44.entities.Notification.create({
-        user_email: adminEmail,
-        type: 'bug_report',
-        question_id: '',
-        message: `🚨 Báo lỗi mới: "${title.trim().slice(0, 50)}${title.trim().length > 50 ? '...' : ''}" từ người dùng ẩn danh.`,
-        read: false,
-      });
 
       // Reset form and reload
       setTitle('');
@@ -252,3 +243,4 @@ export default function BugReport() {
     </div>
   );
 }
+

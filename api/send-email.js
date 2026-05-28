@@ -3,7 +3,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { title, description, userEmail } = req.body;
+  let body = {};
+  try {
+    body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+  } catch (e) {}
+
+  const title = body?.title || 'Kh�ng c� ti�u d?';
+  const description = body?.description || 'Kh�ng c� m� t?';
+  const userEmail = body?.userEmail || '?n danh';
 
   try {
     const response = await fetch('https://api.resend.com/emails', {
@@ -15,13 +22,13 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         from: 'onboarding@resend.dev',
         to: 'fantuan0203@gmail.com',
-        subject: `🚨 Báo lỗi mới: ${title}`,
+        subject: `Bao loi moi: ${title}`,
         html: `
-          <h2>Báo lỗi mới từ The Chicken's Whisper</h2>
-          <p><b>Tiêu đề:</b> ${title}</p>
-          <p><b>Mô tả:</b> ${description}</p>
-          <p><b>Người gửi:</b> ${userEmail || 'Ẩn danh'}</p>
-          <p><b>Thời gian:</b> ${new Date().toLocaleString('vi-VN')}</p>
+          <h2>Bao loi moi tu The Chicken's Whisper</h2>
+          <p><b>Tieu de:</b> ${title}</p>
+          <p><b>Mo ta:</b> ${description}</p>
+          <p><b>Nguoi gui:</b> ${userEmail}</p>
+          <p><b>Thoi gian:</b> ${new Date().toLocaleString('vi-VN')}</p>
         `,
       }),
     });

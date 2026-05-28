@@ -50,6 +50,7 @@ export default function BugReport() {
     e.preventDefault();
     if (!title.trim() || !description.trim()) return;
     setSubmitting(true);
+    const fileUrl = attachedFile?.url || null;
 
     try {
       // 1. Tao BugReport
@@ -77,7 +78,7 @@ export default function BugReport() {
             title: title.trim(),
             description: description.trim(),
             userEmail: user?.email || 'An danh',
-            fileUrl: attachedFile?.url || null,
+            fileUrl: fileUrl,
           }),
         });
       } catch (emailError) {

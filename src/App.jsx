@@ -6,7 +6,34 @@ import MyHistory from './pages/MyHistory.jsx';
 import QuestionDetail from './pages/QuestionDetail.jsx';
 import BugReport from './pages/BugReport.jsx';
 
+function MissingVercelConfig() {
+  return (
+    <div className='min-h-screen bg-[#1a1a1a] px-4 py-12 text-white'>
+      <div className='mx-auto max-w-2xl rounded-xl border border-[#333] bg-[#202020] p-6 shadow-lg'>
+        <h1 className='font-lexend text-2xl font-black text-yellow-400'>
+          Thieu cau hinh moi truong
+        </h1>
+        <p className='mt-3 text-sm text-gray-300'>
+          Them cac Environment Variables sau trong Vercel Project Settings roi Redeploy:
+        </p>
+        <pre className='mt-4 overflow-x-auto rounded-lg bg-black p-4 text-sm text-green-300'>
+{`VITE_BASE44_APP_ID
+VITE_BASE44_APP_BASE_URL
+VITE_BASE44_API_KEY
+RESEND_API_KEY`}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
 function App() {
+  const missingBase44Config = !import.meta.env.VITE_BASE44_APP_ID || !import.meta.env.VITE_BASE44_API_KEY;
+
+  if (missingBase44Config) {
+    return <MissingVercelConfig />;
+  }
+
   return (
     <AuthProvider>
       <BrowserRouter>

@@ -21,7 +21,13 @@ export default async function handler(req, res) {
   const userEmail = body?.userEmail || 'Anonymous';
   const fileUrl = body?.fileUrl || null;
 
-  const resend = new Resend(process.env.VITE_RESEND_API_KEY);
+  const resendApiKey = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
+
+  if (!resendApiKey) {
+    return res.status(500).json({ error: 'Missing RESEND_API_KEY environment variable' });
+  }
+
+  const resend = new Resend(resendApiKey);
 
   try {
     const data = await resend.emails.send({

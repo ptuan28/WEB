@@ -45,7 +45,7 @@ npm install
 ```
 
 **Bước 3 — Cấu hình môi trường**
-
+git log --all --full-history -- a.env
 Tạo file `.env.local`:
 ```
 VITE_BASE44_APP_ID=your_app_id

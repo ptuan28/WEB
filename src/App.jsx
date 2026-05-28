@@ -1,3 +1,4 @@
+import Footer from './components/Footer';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './lib/AuthContext';
 import Home from './pages/Home.jsx';
@@ -16,6 +17,7 @@ function App() {
           <Route path='/bug-report' element={<BugReport />} />
           <Route path='*' element={<Navigate to='/' />} />
         </Routes>
+        <Footer />
       </BrowserRouter>
     </AuthProvider>
   );

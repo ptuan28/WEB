@@ -42,7 +42,7 @@ export default function AnswerCard({ answer, onDelete, questionCreatedBy }) {
 
       {answer.file_url && (
         <a
-          href__={answer.file_url}
+          href={answer.file_url}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 mb-3 px-3 py-1.5 bg-yellow-100 border-2 border-black rounded-xl text-sm font-grotesk font-semibold hover:bg-yellow-200 transition-colors"

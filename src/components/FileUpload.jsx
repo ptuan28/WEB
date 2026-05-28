@@ -26,7 +26,7 @@ export default function FileUpload({ onUpload }) {
   return (
     <div className="flex items-center gap-2">
       <input
-        ref__={inputRef}
+        ref={inputRef}
         type="file"
         accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.txt,.xlsx,.ppt,.pptx"
         onChange={handleFileChange}

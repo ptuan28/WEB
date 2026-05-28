@@ -8,9 +8,9 @@ export default async function handler(req, res) {
     body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
   } catch (e) {}
 
-  const title = body?.title || 'Không có tiêu d?';
-  const description = body?.description || 'Không có mô t?';
-  const userEmail = body?.userEmail || '?n danh';
+  const title = body?.title || 'Khong co tieu de';
+  const description = body?.description || 'Khong co mo ta';
+  const userEmail = body?.userEmail || 'An danh';
 
   try {
     const response = await fetch('https://api.resend.com/emails', {
@@ -22,14 +22,12 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         from: 'onboarding@resend.dev',
         to: 'fantuan0203@gmail.com',
-        subject: `Bao loi moi: ${title}`,
-        html: `
-          <h2>Bao loi moi tu The Chicken's Whisper</h2>
+        subject: `[Bug Report] ${title}`,
+        html: `<h2>Bug Report - The Chicken Whisper</h2>
           <p><b>Tieu de:</b> ${title}</p>
           <p><b>Mo ta:</b> ${description}</p>
           <p><b>Nguoi gui:</b> ${userEmail}</p>
-          <p><b>Thoi gian:</b> ${new Date().toLocaleString('vi-VN')}</p>
-        `,
+          <p><b>Thoi gian:</b> ${new Date().toLocaleString('vi-VN')}</p>`,
       }),
     });
 

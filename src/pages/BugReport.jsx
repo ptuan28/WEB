@@ -10,7 +10,7 @@ import NotificationBell from '../components/NotificationBell';
 import { getMyBugReportIds, saveMyBugReport, removeMyBugReport } from '../lib/userHistory';
 
 export default function BugReport() {
-  const { user, appPublicSettings } = useAuth();
+  const { user } = useAuth();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState('');
@@ -22,11 +22,9 @@ export default function BugReport() {
     setLoading(true);
     try {
       if (user?.email) {
-        // Fetch reports for logged-in user
         const data = await base44.entities.BugReport.filter({ user_email: user.email }, '-created_date');
         setReports(data);
       } else {
-        // Fetch reports using local history for anonymous user
         const reportIds = getMyBugReportIds();
         if (reportIds.length > 0) {
           const fetched = await Promise.all(
@@ -54,59 +52,52 @@ export default function BugReport() {
     setSubmitting(true);
 
     try {
-      // 1. Create the private BugReport entity
+      // 1. Tao BugReport
       const report = await base44.entities.BugReport.create({
         user_email: user?.email || 'anonymous',
         title: title.trim(),
         description: description.trim(),
         file_url: attachedFile?.url || undefined,
         file_name: attachedFile?.name || undefined,
-        status: 'Đã gửi ⏳',
+        status: 'Da gui',
         created_date: new Date().toISOString(),
       });
 
-      // 2. Save to local history if anonymous
+      // 2. Luu local neu an danh
       if (!user) {
         saveMyBugReport(report.id);
       }
 
-// Gửi email thông báo cho admin
+      // 3. Gui email thong bao admin
       try {
         await fetch('/api/send-email', {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_RESEND_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            from: 'onboarding@resend.dev',
-            to: 'fantuan0203@gmail.com',
-            subject: `🚨 Báo lỗi mới: ${title.trim()}`,
-            html: `<h2>Báo lỗi mới từ The Chicken's Whisper</h2>
-              <p><b>Tiêu đề:</b> ${title.trim()}</p>
-              <p><b>Mô tả:</b> ${description.trim()}</p>
-              <p><b>Người gửi:</b> ${user?.email || 'Ẩn danh'}</p>
-              <p><b>Thời gian:</b> ${new Date().toLocaleString('vi-VN')}</p>`,
+            title: title.trim(),
+            description: description.trim(),
+            userEmail: user?.email || 'An danh',
           }),
         });
       } catch (emailError) {
         console.error('Email notification failed:', emailError);
       }
-      // Reset form and reload
+
+      // 4. Reset form
       setTitle('');
       setDescription('');
       setAttachedFile(null);
       await fetchReports();
     } catch (error) {
       console.error('Failed to submit bug report:', error);
-      alert('Đã xảy ra lỗi khi gửi báo cáo. Vui lòng thử lại sau.');
+      alert('Da xay ra loi khi gui bao cao. Vui long thu lai sau.');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (report) => {
-    if (!confirm('Xóa báo cáo lỗi này khỏi lịch sử của bạn?')) return;
+    if (!confirm('Xoa bao cao loi nay khoi lich su cua ban?')) return;
     try {
       await base44.entities.BugReport.delete(report.id);
       if (!user) {
@@ -120,22 +111,22 @@ export default function BugReport() {
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'Đang xử lý ⚙️':
+      case 'Dang xu ly':
         return (
           <span className="flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-blue-100 text-blue-600 border border-blue-400">
-            <Settings className="w-3.5 h-3.5 animate-spin" /> Đang xử lý
+            <Settings className="w-3.5 h-3.5 animate-spin" /> Dang xu ly
           </span>
         );
-      case 'Đã xử lý ✅':
+      case 'Da xu ly':
         return (
           <span className="flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-green-100 text-green-600 border border-green-400">
-            <CheckCircle className="w-3.5 h-3.5" /> Đã sửa lỗi
+            <CheckCircle className="w-3.5 h-3.5" /> Da sua loi
           </span>
         );
       default:
         return (
           <span className="flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-yellow-100 text-yellow-600 border border-yellow-400">
-            <Clock className="w-3.5 h-3.5" /> Đã gửi
+            <Clock className="w-3.5 h-3.5" /> Da gui
           </span>
         );
     }
@@ -166,7 +157,7 @@ export default function BugReport() {
           </div>
         </div>
 
-        {/* Form Báo Lỗi */}
+        {/* Form */}
         <div className="bg-white border-4 border-black rounded-3xl p-6 shadow-[6px_6px_0px_black]">
           <h2 className="font-lexend font-black text-xl mb-4">✍️ Gửi báo cáo lỗi mới hoặc những cái thiếu sót</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -206,7 +197,7 @@ export default function BugReport() {
           </form>
         </div>
 
-        {/* Lịch Sử Báo Lỗi Của Tôi */}
+        {/* Lich su */}
         <div>
           <h2 className="font-lexend font-black text-xl mb-4">📜 Lịch sử báo lỗi của bạn</h2>
           {loading ? (
@@ -235,7 +226,7 @@ export default function BugReport() {
                     </button>
                   </div>
                   <p className="font-grotesk text-sm text-gray-600 leading-relaxed whitespace-pre-line">{r.description}</p>
-                  
+
                   {r.file_url && (
                     <div className="pt-1">
                       <a
@@ -264,4 +255,3 @@ export default function BugReport() {
     </div>
   );
 }
-

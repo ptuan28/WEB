@@ -70,7 +70,28 @@ export default function BugReport() {
         saveMyBugReport(report.id);
       }
 
-
+// Gửi email thông báo cho admin
+      try {
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_RESEND_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'onboarding@resend.dev',
+            to: 'fantuan0203@gmail.com',
+            subject: `🚨 Báo lỗi mới: ${title.trim()}`,
+            html: `<h2>Báo lỗi mới từ The Chicken's Whisper</h2>
+              <p><b>Tiêu đề:</b> ${title.trim()}</p>
+              <p><b>Mô tả:</b> ${description.trim()}</p>
+              <p><b>Người gửi:</b> ${user?.email || 'Ẩn danh'}</p>
+              <p><b>Thời gian:</b> ${new Date().toLocaleString('vi-VN')}</p>`,
+          }),
+        });
+      } catch (emailError) {
+        console.error('Email notification failed:', emailError);
+      }
       // Reset form and reload
       setTitle('');
       setDescription('');

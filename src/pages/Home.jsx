@@ -69,6 +69,12 @@ export default function Home() {
               📜 Lịch sử của tôi
             </Link>
             <Link
+              to="/tai-lieu"
+              className="px-6 py-4 bg-blue-100 text-blue-700 font-lexend font-black text-lg rounded-2xl border-2 border-black shadow-[4px_4px_0px_black] hover:shadow-[6px_6px_0px_black] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all flex items-center gap-1.5"
+            >
+              📚 Tài liệu
+            </Link>
+            <Link
               to="/bug-report"
               className="px-6 py-4 bg-pink-100 text-rose-600 font-lexend font-black text-lg rounded-2xl border-2 border-black shadow-[4px_4px_0px_black] hover:shadow-[6px_6px_0px_black] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all flex items-center gap-1.5"
             >

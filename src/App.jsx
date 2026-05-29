@@ -5,6 +5,8 @@ import Home from './pages/Home.jsx';
 import MyHistory from './pages/MyHistory.jsx';
 import QuestionDetail from './pages/QuestionDetail.jsx';
 import BugReport from './pages/BugReport.jsx';
+import TaiLieu from './pages/TaiLieu.jsx';
+import AdminTaiLieu from './pages/AdminTaiLieu.jsx';
 
 function MissingVercelConfig() {
   return (
@@ -44,6 +46,8 @@ function App() {
               <Route path='/history' element={<MyHistory />} />
               <Route path='/question/:questionId' element={<QuestionDetail />} />
               <Route path='/bug-report' element={<BugReport />} />
+              <Route path='/tai-lieu' element={<TaiLieu />} />
+              <Route path='/admin/tai-lieu' element={<AdminTaiLieu />} />
               <Route path='*' element={<Navigate to='/' />} />
             </Routes>
           </main>
@@ -55,4 +59,3 @@ function App() {
 }
 
 export default App;
-

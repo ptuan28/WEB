@@ -24,6 +24,7 @@ export default function TaiLieu() {
   const [googleError, setGoogleError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [googleFallbackUrl, setGoogleFallbackUrl] = useState('');
   const [form, setForm] = useState({ title: '', subject: '', block: 'Kinh tế', exam_type: 'Giữa kỳ', file_url: '', description: '' });
 
   const fetchDocuments = async () => {
@@ -52,6 +53,7 @@ export default function TaiLieu() {
     setGoogleLoading(true);
     setGoogleError('');
     setGoogleResults([]);
+    setGoogleFallbackUrl('');
 
     // Construct search query dynamically
     let query = `đề thi ${googleQuery.trim()}`;
@@ -65,6 +67,7 @@ export default function TaiLieu() {
     }
 
     const primaryQuery = `${query} filetype:pdf`;
+    setGoogleFallbackUrl(`https://www.google.com/search?q=${encodeURIComponent(primaryQuery)}`);
     const apiKey = import.meta.env.VITE_GOOGLE_API_KEY || import.meta.env.VITE_GOOGLE_SEARCH_API_KEY;
     const engineId = import.meta.env.VITE_GOOGLE_CX || import.meta.env.VITE_GOOGLE_SEARCH_ENGINE_ID;
 
@@ -76,16 +79,22 @@ export default function TaiLieu() {
       let data = await res.json();
 
       if (data.error) {
-        setGoogleError('Hết quota tìm kiếm hôm nay (100 lượt/ngày). Thử lại ngày mai!');
+        setGoogleError('Hết quota tìm kiếm hôm nay (100 lượt/ngày). Tuy nhiên, bạn có thể xem kết quả trực tiếp trên Google Search bằng nút phía dưới!');
         return;
       }
 
       // 2. Fallback: if no PDFs found, search without filetype:pdf
       if (!data.items || data.items.length === 0) {
+        setGoogleFallbackUrl(`https://www.google.com/search?q=${encodeURIComponent(query)}`);
         res = await fetch(
           `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${engineId}&q=${encodeURIComponent(query)}&num=10`
         );
         data = await res.json();
+      }
+
+      if (data.error) {
+        setGoogleError('Hết quota tìm kiếm hôm nay (100 lượt/ngày). Tuy nhiên, bạn có thể xem kết quả trực tiếp trên Google Search bằng nút phía dưới!');
+        return;
       }
 
       if (!data.items || data.items.length === 0) {
@@ -281,8 +290,18 @@ export default function TaiLieu() {
             )}
 
             {googleError && (
-              <div className="bg-red-50 border-2 border-red-300 rounded-2xl p-4 text-center">
-                <p className="font-grotesk text-sm text-red-600">{googleError}</p>
+              <div className="bg-red-50 border-4 border-black rounded-3xl p-6 shadow-[4px_4px_0px_black] text-center space-y-4">
+                <p className="font-lexend font-black text-rose-600 text-sm md:text-base leading-relaxed">{googleError}</p>
+                {googleFallbackUrl && (
+                  <a
+                    href={googleFallbackUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-yellow-400 hover:bg-yellow-300 border-2 border-black rounded-2xl font-lexend font-black text-sm transition-all shadow-[3px_3px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] text-black"
+                  >
+                    🔍 Mở kết quả tìm kiếm trên Google Search
+                  </a>
+                )}
               </div>
             )}
 

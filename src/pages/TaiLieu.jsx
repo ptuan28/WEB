@@ -17,8 +17,8 @@ export default function TaiLieu() {
   const [examType, setExamType] = useState('Tất cả');
   const [localSearch, setLocalSearch] = useState('');
   const [googleQuery, setGoogleQuery] = useState('');
-  const [googleBlock, setGoogleBlock] = useState('Kinh tế');
-  const [googleExamType, setGoogleExamType] = useState('Giữa kỳ');
+  const [googleBlock, setGoogleBlock] = useState('Tất cả');
+  const [googleExamType, setGoogleExamType] = useState('Tất cả');
   const [googleResults, setGoogleResults] = useState([]);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState('');
@@ -52,18 +52,42 @@ export default function TaiLieu() {
     setGoogleLoading(true);
     setGoogleError('');
     setGoogleResults([]);
-    const query = `đề thi ${googleExamType} ${googleQuery} ${googleBlock} filetype:pdf`;
+
+    // Construct search query dynamically
+    let query = `đề thi ${googleQuery.trim()}`;
+    if (googleExamType && googleExamType !== 'Tất cả') {
+      query += ` ${googleExamType}`;
+    }
+    if (googleBlock && googleBlock !== 'Tất cả') {
+      if (!googleQuery.toLowerCase().includes(googleBlock.toLowerCase())) {
+        query += ` ${googleBlock}`;
+      }
+    }
+
+    const primaryQuery = `${query} filetype:pdf`;
     const apiKey = import.meta.env.VITE_GOOGLE_API_KEY || import.meta.env.VITE_GOOGLE_SEARCH_API_KEY;
     const engineId = import.meta.env.VITE_GOOGLE_CX || import.meta.env.VITE_GOOGLE_SEARCH_ENGINE_ID;
+
     try {
-      const res = await fetch(
-        `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${engineId}&q=${encodeURIComponent(query)}&num=10`
+      // 1. Try search with filetype:pdf first
+      let res = await fetch(
+        `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${engineId}&q=${encodeURIComponent(primaryQuery)}&num=10`
       );
-      const data = await res.json();
+      let data = await res.json();
+
       if (data.error) {
         setGoogleError('Hết quota tìm kiếm hôm nay (100 lượt/ngày). Thử lại ngày mai!');
         return;
       }
+
+      // 2. Fallback: if no PDFs found, search without filetype:pdf
+      if (!data.items || data.items.length === 0) {
+        res = await fetch(
+          `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${engineId}&q=${encodeURIComponent(query)}&num=10`
+        );
+        data = await res.json();
+      }
+
       if (!data.items || data.items.length === 0) {
         setGoogleError('Không tìm thấy tài liệu phù hợp. Thử từ khóa khác!');
         return;
@@ -173,7 +197,10 @@ export default function TaiLieu() {
                 <div className="text-5xl mb-3">📭</div>
                 <p className="font-lexend font-bold text-gray-500">Chưa có tài liệu nào</p>
                 <p className="font-grotesk text-gray-400 text-sm mt-1">Hãy là người đầu tiên góp tài liệu!</p>
-                <button onClick={() => setTab('search')}
+                <button onClick={() => {
+                  setGoogleQuery(localSearch);
+                  setTab('search');
+                }}
                   className="mt-4 px-4 py-2 bg-black text-yellow-400 rounded-xl font-lexend font-black text-sm">
                   Tìm trên Internet →
                 </button>
@@ -216,6 +243,7 @@ export default function TaiLieu() {
                   <label className="block font-lexend font-black text-xs mb-1">Khối ngành</label>
                   <select value={googleBlock} onChange={e => setGoogleBlock(e.target.value)}
                     className="w-full border-2 border-black rounded-xl p-2.5 font-grotesk text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                    <option>Tất cả</option>
                     <option>Kinh tế</option>
                     <option>Kỹ thuật</option>
                   </select>
@@ -224,6 +252,7 @@ export default function TaiLieu() {
                   <label className="block font-lexend font-black text-xs mb-1">Loại đề</label>
                   <select value={googleExamType} onChange={e => setGoogleExamType(e.target.value)}
                     className="w-full border-2 border-black rounded-xl p-2.5 font-grotesk text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                    <option>Tất cả</option>
                     <option>Giữa kỳ</option>
                     <option>Cuối kỳ</option>
                   </select>

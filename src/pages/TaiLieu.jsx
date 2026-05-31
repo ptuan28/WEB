@@ -53,8 +53,8 @@ export default function TaiLieu() {
     setGoogleError('');
     setGoogleResults([]);
     const query = `đề thi ${googleExamType} ${googleQuery} ${googleBlock} filetype:pdf`;
-    const apiKey = import.meta.env.VITE_GOOGLE_SEARCH_API_KEY;
-    const engineId = import.meta.env.VITE_GOOGLE_SEARCH_ENGINE_ID;
+    const apiKey = import.meta.env.VITE_GOOGLE_API_KEY || import.meta.env.VITE_GOOGLE_SEARCH_API_KEY;
+    const engineId = import.meta.env.VITE_GOOGLE_CX || import.meta.env.VITE_GOOGLE_SEARCH_ENGINE_ID;
     try {
       const res = await fetch(
         `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${engineId}&q=${encodeURIComponent(query)}&num=10`

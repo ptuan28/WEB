@@ -66,13 +66,14 @@ export default function TaiLieu() {
       }
     }
 
-    const primaryQuery = `${query} filetype:pdf`;
+    // Direct Google query targeting word, pdf, and drive links
+    const primaryQuery = `${query} (filetype:pdf OR filetype:doc OR filetype:docx OR site:drive.google.com OR site:docs.google.com)`;
     setGoogleFallbackUrl(`https://www.google.com/search?q=${encodeURIComponent(primaryQuery)}`);
     const apiKey = import.meta.env.VITE_GOOGLE_API_KEY || import.meta.env.VITE_GOOGLE_SEARCH_API_KEY;
     const engineId = import.meta.env.VITE_GOOGLE_CX || import.meta.env.VITE_GOOGLE_SEARCH_ENGINE_ID;
 
     try {
-      // 1. Try search with filetype:pdf first
+      // 1. Try search with format query
       let res = await fetch(
         `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${engineId}&q=${encodeURIComponent(primaryQuery)}&num=10`
       );
@@ -83,7 +84,7 @@ export default function TaiLieu() {
         return;
       }
 
-      // 2. Fallback: if no PDFs found, search without filetype:pdf
+      // 2. Fallback: if no PDFs/Word/Drive found, search without strict formats
       if (!data.items || data.items.length === 0) {
         setGoogleFallbackUrl(`https://www.google.com/search?q=${encodeURIComponent(query)}`);
         res = await fetch(
@@ -101,11 +102,54 @@ export default function TaiLieu() {
         setGoogleError('Không tìm thấy tài liệu phù hợp. Thử từ khóa khác!');
         return;
       }
+
+      // Validate that at least one item matches the file format criteria
+      const validItems = data.items.filter(isValidFileLink);
+      if (validItems.length === 0) {
+        setGoogleError('Không tìm thấy tài liệu định dạng Word, PDF hoặc Google Drive phù hợp. Thử từ khóa khác!');
+        return;
+      }
+
       setGoogleResults(data.items);
     } catch (err) {
       setGoogleError('Lỗi kết nối. Thử lại sau!');
     } finally {
       setGoogleLoading(false);
+    }
+  };
+
+  const isValidFileLink = (url) => {
+    if (!url) return false;
+    const low = url.toLowerCase();
+    const isPdf = low.endsWith('.pdf') || low.includes('.pdf');
+    const isWord = low.endsWith('.doc') || low.endsWith('.docx') || low.includes('.doc?') || low.includes('.docx?') || low.includes('/document/d/');
+    const isDrive = low.includes('drive.google.com') || low.includes('docs.google.com');
+    return isPdf || isWord || isDrive;
+  };
+
+  const handleImportDocument = async (item) => {
+    if (!isValidFileLink(item.link)) {
+      alert('Chỉ chấp nhận các tệp tin định dạng PDF, Word (.doc, .docx) hoặc liên kết Google Drive!');
+      return;
+    }
+    try {
+      const cleanTitle = item.title.replace(/<\/?[^>]+(>|$)/g, "");
+      await base44.entities.Document.create({
+        title: cleanTitle,
+        subject: googleQuery || "Chưa rõ môn",
+        block: googleBlock === 'Tất cả' ? 'Kinh tế' : googleBlock,
+        exam_type: googleExamType === 'Tất cả' ? 'Giữa kỳ' : googleExamType,
+        file_url: item.link,
+        description: item.snippet || `Nguồn: ${item.displayLink}`,
+        uploaded_by: user?.email || 'anonymous',
+        status: 'approved',
+        created_date: new Date().toISOString(),
+      });
+      alert(`Đã lưu tài liệu "${cleanTitle}" vào kho tài liệu thành công!`);
+      fetchDocuments(); // Reload the community documents list
+    } catch (err) {
+      console.error('Failed to import document:', err);
+      alert('Lưu tài liệu thất bại, vui lòng thử lại sau.');
     }
   };
 
@@ -305,11 +349,11 @@ export default function TaiLieu() {
               </div>
             )}
 
-            {googleResults.length > 0 && (
+            {googleResults.filter(isValidFileLink).length > 0 && (
               <>
-                <p className="font-grotesk text-sm text-gray-500">Tìm thấy <span className="font-bold text-black">{googleResults.length}</span> kết quả</p>
+                <p className="font-grotesk text-sm text-gray-500">Tìm thấy <span className="font-bold text-black">{googleResults.filter(isValidFileLink).length}</span> tài liệu hợp lệ</p>
                 <div className="space-y-3">
-                  {googleResults.map((item, i) => (
+                  {googleResults.filter(isValidFileLink).map((item, i) => (
                     <div key={i} className="bg-white border-2 border-black rounded-2xl p-4 shadow-[2px_2px_0px_black] hover:shadow-[4px_4px_0px_black] hover:-translate-y-0.5 transition-all">
                       <div className="flex items-start gap-3">
                         <div className="w-9 h-9 bg-blue-100 border-2 border-black rounded-xl flex items-center justify-center shrink-0">
@@ -322,10 +366,18 @@ export default function TaiLieu() {
                           {item.snippet && <p className="font-grotesk text-xs text-gray-500 mt-1 line-clamp-2">{item.snippet}</p>}
                         </div>
                       </div>
-                      <a href={item.link} target="_blank" rel="noreferrer"
-                        className="flex items-center justify-center gap-2 w-full mt-3 py-2 bg-yellow-400 hover:bg-yellow-300 border-2 border-black rounded-xl font-lexend font-black text-sm transition-all shadow-[2px_2px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
-                        <ExternalLink className="w-4 h-4" /> Xem tài liệu
-                      </a>
+                      <div className="flex gap-2 mt-4">
+                        <a href={item.link} target="_blank" rel="noreferrer"
+                          className="flex-1 flex items-center justify-center gap-2 py-2 bg-yellow-400 hover:bg-yellow-300 border-2 border-black rounded-xl font-lexend font-black text-sm transition-all shadow-[2px_2px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] text-black">
+                          <ExternalLink className="w-4 h-4" /> Xem tài liệu
+                        </a>
+                        <button
+                          onClick={() => handleImportDocument(item)}
+                          className="flex-1 flex items-center justify-center gap-2 py-2 bg-green-400 hover:bg-green-300 border-2 border-black rounded-xl font-lexend font-black text-sm transition-all shadow-[2px_2px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] text-black"
+                        >
+                          📌 Lưu vào Web
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

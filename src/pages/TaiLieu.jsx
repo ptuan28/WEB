@@ -399,67 +399,55 @@ export default function TaiLieu() {
 
             {visibleGoogleResults.length > 0 && (
               <>
-                <div className="flex items-center justify-between">
-                  <p className="font-lexend font-black text-base">
-                    📄 Kết quả tìm kiếm
-                    <span className="ml-2 px-2 py-0.5 bg-black text-yellow-400 text-xs rounded-full font-black">
-                      {visibleGoogleResults.length} tài liệu
-                    </span>
-                  </p>
-                </div>
-
+                <p className="font-grotesk text-sm text-gray-500">
+                  Tìm thấy <span className="font-bold text-black">{visibleGoogleResults.length}</span> nguồn tài liệu
+                </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {visibleGoogleResults.map((item, i) => {
                     const fileType = getFileTypeLabel(item);
-                    const fileColors = {
-                      PDF: { bg: 'bg-rose-100', border: 'border-rose-400', text: 'text-rose-600', icon: '📄' },
-                      DOCX: { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-600', icon: '📝' },
-                      DOC: { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-600', icon: '📝' },
-                      DRIVE: { bg: 'bg-green-100', border: 'border-green-400', text: 'text-green-600', icon: '🗂️' },
-                      LINK: { bg: 'bg-yellow-100', border: 'border-yellow-400', text: 'text-yellow-700', icon: '🔗' },
-                    };
-                    const color = fileColors[fileType] || fileColors.LINK;
                     const cleanTitle = (item.title || '').replace(/<\/?[^>]+(>|$)/g, '');
+                    const iconBg = fileType === 'PDF' ? 'bg-rose-100' : fileType === 'DRIVE' ? 'bg-green-100' : 'bg-blue-100';
+                    const iconColor = fileType === 'PDF' ? 'text-rose-500' : fileType === 'DRIVE' ? 'text-green-500' : 'text-blue-500';
 
                     return (
-                      <div key={i} className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0px_black] hover:shadow-[6px_6px_0px_black] hover:-translate-y-0.5 transition-all flex flex-col gap-3">
+                      <div key={i} className="bg-white border-2 border-black rounded-2xl p-5 shadow-[3px_3px_0px_black] hover:shadow-[5px_5px_0px_black] hover:-translate-y-0.5 transition-all space-y-3">
+                        {/* Header row: icon + title */}
+                        <div className="flex items-start gap-3">
+                          <div className={`w-10 h-10 ${iconBg} border-2 border-black rounded-xl flex items-center justify-center shrink-0`}>
+                            <FileText className={`w-5 h-5 ${iconColor}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-lexend font-black text-sm text-gray-800 leading-snug line-clamp-2">
+                              {cleanTitle || 'Tài liệu không có tiêu đề'}
+                            </h3>
+                            <p className="font-grotesk text-xs text-gray-500 mt-0.5 truncate">{item.displayLink}</p>
+                          </div>
+                        </div>
 
-                        {/* File type + shortcut badges */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`inline-flex items-center gap-1 px-3 py-1 ${color.bg} border-2 ${color.border} rounded-full text-xs font-lexend font-black ${color.text}`}>
-                            {color.icon} {fileType}
+                        {/* Badges */}
+                        <div className="flex flex-wrap gap-1.5">
+                          <span className="px-2 py-0.5 bg-yellow-100 border border-yellow-400 rounded-full text-xs font-bold text-yellow-700">
+                            {fileType}
                           </span>
                           {item.isSearchShortcut && (
-                            <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 border-2 border-purple-400 rounded-full text-xs font-lexend font-black text-purple-700">
-                              ⚡ TÌM NHANH
+                            <span className="px-2 py-0.5 bg-purple-100 border border-purple-400 rounded-full text-xs font-bold text-purple-700">
+                              Tìm nhanh
                             </span>
                           )}
                         </div>
 
-                        {/* Title */}
-                        <h3 className="font-lexend font-black text-sm text-gray-900 leading-snug line-clamp-2">
-                          {cleanTitle || 'Tài liệu không có tiêu đề'}
-                        </h3>
-
-                        {/* Source URL */}
-                        <p className="font-grotesk text-xs text-green-700 truncate font-semibold">
-                          🌐 {item.displayLink}
-                        </p>
-
                         {/* Snippet */}
                         {item.snippet && (
-                          <p className="font-grotesk text-xs text-gray-500 line-clamp-2 leading-relaxed">
-                            {item.snippet}
-                          </p>
+                          <p className="font-grotesk text-xs text-gray-500 line-clamp-2">{item.snippet}</p>
                         )}
 
-                        {/* Action buttons */}
-                        <div className="flex gap-2 mt-auto pt-1">
+                        {/* Buttons */}
+                        <div className="flex gap-2">
                           <a
                             href={item.link}
                             target="_blank"
                             rel="noreferrer"
-                            className={`${item.isSearchShortcut ? 'w-full' : 'flex-1'} flex items-center justify-center gap-2 py-2.5 bg-yellow-400 hover:bg-yellow-300 border-2 border-black rounded-2xl font-lexend font-black text-sm transition-all shadow-[3px_3px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] text-black`}
+                            className={`${item.isSearchShortcut ? 'w-full' : 'flex-1'} flex items-center justify-center gap-2 py-2.5 bg-yellow-400 hover:bg-yellow-300 border-2 border-black rounded-xl font-lexend font-black text-sm transition-all shadow-[2px_2px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]`}
                           >
                             <ExternalLink className="w-4 h-4" />
                             {item.isSearchShortcut ? 'Mở danh sách' : 'Xem tài liệu'}
@@ -467,7 +455,7 @@ export default function TaiLieu() {
                           {!item.isSearchShortcut && (
                             <button
                               onClick={() => handleImportDocument(item)}
-                              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-green-400 hover:bg-green-300 border-2 border-black rounded-2xl font-lexend font-black text-sm transition-all shadow-[3px_3px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] text-black"
+                              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-black hover:bg-gray-800 border-2 border-black rounded-xl font-lexend font-black text-sm text-yellow-400 transition-all shadow-[2px_2px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]"
                             >
                               📌 Lưu vào Web
                             </button>

@@ -2,7 +2,7 @@ import { Facebook, Github, Instagram, Mail, Music2 } from 'lucide-react';
 
 export default function Footer() {
   const links = [
-    { label: "GitHub", href: "https://github.com/ptuan28/WEB", icon: <Github className="w-5 h-5" /> },
+    { label: "GitHub", href: "https://github.com/ptuan28", icon: <Github className="w-5 h-5" /> },
     { label: "Facebook", href: "https://www.facebook.com/fantuan123", icon: <Facebook className="w-5 h-5" /> },
     { label: "Instagram", href: "https://www.instagram.com", icon: <Instagram className="w-5 h-5" /> },
     { label: "TikTok", href: "https://www.tiktok.com/@p.tuan0_0", icon: <Music2 className="w-5 h-5" /> },

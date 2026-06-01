@@ -7,6 +7,42 @@ import NotificationBell from '../components/NotificationBell';
 
 const BLOCKS = ['Tất cả', 'Kinh tế', 'Kỹ thuật'];
 const EXAM_TYPES = ['Tất cả', 'Giữa kỳ', 'Cuối kỳ'];
+const SEARCH_FORMATS = [
+  {
+    label: 'PDF',
+    querySuffix: 'filetype:pdf',
+    snippet: 'Danh sách kết quả Google đã lọc riêng các tệp PDF.',
+  },
+  {
+    label: 'DOCX',
+    querySuffix: 'filetype:docx',
+    snippet: 'Danh sách kết quả Google đã lọc riêng các tệp Word .docx.',
+  },
+  {
+    label: 'DOC',
+    querySuffix: 'filetype:doc',
+    snippet: 'Danh sách kết quả Google đã lọc riêng các tệp Word .doc.',
+  },
+  {
+    label: 'DRIVE',
+    querySuffix: '(site:drive.google.com OR site:docs.google.com)',
+    snippet: 'Danh sách tài liệu được chia sẻ qua Google Drive hoặc Google Docs.',
+  },
+];
+
+const getGoogleSearchUrl = (query) => `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+
+const buildSearchShortcutResults = (query) => SEARCH_FORMATS.map(format => {
+  const searchQuery = `${query} ${format.querySuffix}`;
+  return {
+    title: `${format.label}: ${query}`,
+    link: getGoogleSearchUrl(searchQuery),
+    displayLink: format.label === 'DRIVE' ? 'drive.google.com / docs.google.com' : 'google.com/search',
+    snippet: format.snippet,
+    fileType: format.label,
+    isSearchShortcut: true,
+  };
+});
 
 export default function TaiLieu() {
   const { user } = useAuth();
@@ -21,10 +57,9 @@ export default function TaiLieu() {
   const [googleExamType, setGoogleExamType] = useState('Tất cả');
   const [googleResults, setGoogleResults] = useState([]);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [googleError, setGoogleError] = useState('');
+  const [googleNotice, setGoogleNotice] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [googleFallbackUrl, setGoogleFallbackUrl] = useState('');
   const [form, setForm] = useState({ title: '', subject: '', block: 'Kinh tế', exam_type: 'Giữa kỳ', file_url: '', description: '' });
 
   const fetchDocuments = async () => {
@@ -51,9 +86,8 @@ export default function TaiLieu() {
   const handleGoogleSearch = async () => {
     if (!googleQuery.trim()) return;
     setGoogleLoading(true);
-    setGoogleError('');
+    setGoogleNotice('');
     setGoogleResults([]);
-    setGoogleFallbackUrl('');
 
     // Construct search query dynamically
     let query = `đề thi ${googleQuery.trim()}`;
@@ -67,52 +101,61 @@ export default function TaiLieu() {
     }
 
     // Direct Google query targeting word, pdf, and drive links
-    const primaryQuery = `${query} (filetype:pdf OR filetype:doc OR filetype:docx OR site:drive.google.com OR site:docs.google.com)`;
-    setGoogleFallbackUrl(`https://www.google.com/search?q=${encodeURIComponent(primaryQuery)}`);
+    const primaryQuery = `${query} (filetype:pdf OR filetype:docx OR filetype:doc OR site:drive.google.com OR site:docs.google.com)`;
     const apiKey = import.meta.env.VITE_GOOGLE_API_KEY || import.meta.env.VITE_GOOGLE_SEARCH_API_KEY;
     const engineId = import.meta.env.VITE_GOOGLE_CX || import.meta.env.VITE_GOOGLE_SEARCH_ENGINE_ID;
 
     try {
+      if (!apiKey || !engineId) {
+        setGoogleNotice('Chưa cấu hình Google Search API, nên đang hiển thị các nguồn tìm nhanh theo đúng định dạng tài liệu.');
+        setGoogleResults(buildSearchShortcutResults(query));
+        return;
+      }
+
       // 1. Try search with format query
       let res = await fetch(
         `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${engineId}&q=${encodeURIComponent(primaryQuery)}&num=10`
       );
       let data = await res.json();
 
-      if (data.error) {
-        setGoogleError('Hết quota tìm kiếm hôm nay (100 lượt/ngày). Tuy nhiên, bạn có thể xem kết quả trực tiếp trên Google Search bằng nút phía dưới!');
-        return;
-      }
+      // if (data.error) {
+      //   setGoogleNotice('Google Search API đang hết quota, nên đang hiển thị các nguồn tìm nhanh theo đúng định dạng tài liệu.');
+      //   setGoogleResults(buildSearchShortcutResults(query));
+      //   return;
+      // }
 
       // 2. Fallback: if no PDFs/Word/Drive found, search without strict formats
       if (!data.items || data.items.length === 0) {
-        setGoogleFallbackUrl(`https://www.google.com/search?q=${encodeURIComponent(query)}`);
         res = await fetch(
           `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${engineId}&q=${encodeURIComponent(query)}&num=10`
         );
         data = await res.json();
       }
 
-      if (data.error) {
-        setGoogleError('Hết quota tìm kiếm hôm nay (100 lượt/ngày). Tuy nhiên, bạn có thể xem kết quả trực tiếp trên Google Search bằng nút phía dưới!');
-        return;
-      }
+      // if (data.error) {
+      //   setGoogleNotice('Google Search API đang hết quota, nên đang hiển thị các nguồn tìm nhanh theo đúng định dạng tài liệu.');
+      //   setGoogleResults(buildSearchShortcutResults(query));
+      //   return;
+      // }
 
-      if (!data.items || data.items.length === 0) {
-        setGoogleError('Không tìm thấy tài liệu phù hợp. Thử từ khóa khác!');
-        return;
-      }
+      // if (!data.items || data.items.length === 0) {
+      //   setGoogleNotice('Chưa tìm thấy kết quả trực tiếp, nên đang hiển thị các nguồn tìm nhanh theo đúng định dạng tài liệu.');
+      //   setGoogleResults(buildSearchShortcutResults(query));
+      //   return;
+      // }
 
       // Validate that at least one item matches the file format criteria
       const validItems = data.items.filter(isValidFileLink);
       if (validItems.length === 0) {
-        setGoogleError('Không tìm thấy tài liệu định dạng Word, PDF hoặc Google Drive phù hợp. Thử từ khóa khác!');
+        setGoogleNotice('Kết quả trực tiếp chưa có PDF, Word hoặc Drive, nên đang hiển thị các nguồn tìm nhanh theo đúng định dạng tài liệu.');
+        setGoogleResults(buildSearchShortcutResults(query));
         return;
       }
 
-      setGoogleResults(data.items);
-    } catch (err) {
-      setGoogleError('Lỗi kết nối. Thử lại sau!');
+      setGoogleResults(validItems);
+    } catch {
+      setGoogleNotice('Không kết nối được Google Search API, nên đang hiển thị các nguồn tìm nhanh theo đúng định dạng tài liệu.');
+      setGoogleResults(buildSearchShortcutResults(query));
     } finally {
       setGoogleLoading(false);
     }
@@ -125,6 +168,18 @@ export default function TaiLieu() {
     const isWord = low.endsWith('.doc') || low.endsWith('.docx') || low.includes('.doc?') || low.includes('.docx?') || low.includes('/document/d/');
     const isDrive = low.includes('drive.google.com') || low.includes('docs.google.com');
     return isPdf || isWord || isDrive;
+  };
+
+  const isDisplayableSearchResult = (item) => item?.isSearchShortcut || isValidFileLink(item?.link);
+
+  const getFileTypeLabel = (item) => {
+    if (item?.fileType) return item.fileType;
+    const low = item?.link?.toLowerCase() || '';
+    if (low.includes('drive.google.com') || low.includes('docs.google.com')) return 'DRIVE';
+    if (low.includes('.docx')) return 'DOCX';
+    if (low.includes('.doc')) return 'DOC';
+    if (low.includes('.pdf')) return 'PDF';
+    return 'LINK';
   };
 
   const handleImportDocument = async (item) => {
@@ -176,12 +231,14 @@ export default function TaiLieu() {
       setShowModal(false);
       setForm({ title: '', subject: '', block: 'Kinh tế', exam_type: 'Giữa kỳ', file_url: '', description: '' });
       alert('Đã gửi tài liệu! Admin sẽ duyệt sớm.');
-    } catch (err) {
+    } catch {
       alert('Gửi thất bại, thử lại sau.');
     } finally {
       setSubmitting(false);
     }
   };
+
+  const visibleGoogleResults = googleResults.filter(isDisplayableSearchResult);
 
   return (
     <div className="min-h-screen bg-[#FFFDF5]">
@@ -333,59 +390,99 @@ export default function TaiLieu() {
               </div>
             )}
 
-            {googleError && (
-              <div className="bg-red-50 border-4 border-black rounded-3xl p-6 shadow-[4px_4px_0px_black] text-center space-y-4">
-                <p className="font-lexend font-black text-rose-600 text-sm md:text-base leading-relaxed">{googleError}</p>
-                {googleFallbackUrl && (
-                  <a
-                    href={googleFallbackUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-yellow-400 hover:bg-yellow-300 border-2 border-black rounded-2xl font-lexend font-black text-sm transition-all shadow-[3px_3px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] text-black"
-                  >
-                    🔍 Mở kết quả tìm kiếm trên Google Search
-                  </a>
-                )}
+            {googleNotice && !googleLoading && (
+              <div className="bg-yellow-50 border-2 border-black rounded-2xl p-4 shadow-[2px_2px_0px_black] flex items-start gap-3">
+                <span className="text-xl shrink-0">💡</span>
+                <p className="font-grotesk text-sm text-gray-700 leading-relaxed">{googleNotice}</p>
               </div>
             )}
 
-            {googleResults.filter(isValidFileLink).length > 0 && (
+            {visibleGoogleResults.length > 0 && (
               <>
-                <p className="font-grotesk text-sm text-gray-500">Tìm thấy <span className="font-bold text-black">{googleResults.filter(isValidFileLink).length}</span> tài liệu hợp lệ</p>
-                <div className="space-y-3">
-                  {googleResults.filter(isValidFileLink).map((item, i) => (
-                    <div key={i} className="bg-white border-2 border-black rounded-2xl p-4 shadow-[2px_2px_0px_black] hover:shadow-[4px_4px_0px_black] hover:-translate-y-0.5 transition-all">
-                      <div className="flex items-start gap-3">
-                        <div className="w-9 h-9 bg-blue-100 border-2 border-black rounded-xl flex items-center justify-center shrink-0">
-                          <FileText className="w-4 h-4 text-blue-500" />
+                <div className="flex items-center justify-between">
+                  <p className="font-lexend font-black text-base">
+                    📄 Kết quả tìm kiếm
+                    <span className="ml-2 px-2 py-0.5 bg-black text-yellow-400 text-xs rounded-full font-black">
+                      {visibleGoogleResults.length} tài liệu
+                    </span>
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {visibleGoogleResults.map((item, i) => {
+                    const fileType = getFileTypeLabel(item);
+                    const fileColors = {
+                      PDF: { bg: 'bg-rose-100', border: 'border-rose-400', text: 'text-rose-600', icon: '📄' },
+                      DOCX: { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-600', icon: '📝' },
+                      DOC: { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-600', icon: '📝' },
+                      DRIVE: { bg: 'bg-green-100', border: 'border-green-400', text: 'text-green-600', icon: '🗂️' },
+                      LINK: { bg: 'bg-yellow-100', border: 'border-yellow-400', text: 'text-yellow-700', icon: '🔗' },
+                    };
+                    const color = fileColors[fileType] || fileColors.LINK;
+                    const cleanTitle = (item.title || '').replace(/<\/?[^>]+(>|$)/g, '');
+
+                    return (
+                      <div key={i} className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0px_black] hover:shadow-[6px_6px_0px_black] hover:-translate-y-0.5 transition-all flex flex-col gap-3">
+
+                        {/* File type + shortcut badges */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`inline-flex items-center gap-1 px-3 py-1 ${color.bg} border-2 ${color.border} rounded-full text-xs font-lexend font-black ${color.text}`}>
+                            {color.icon} {fileType}
+                          </span>
+                          {item.isSearchShortcut && (
+                            <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 border-2 border-purple-400 rounded-full text-xs font-lexend font-black text-purple-700">
+                              ⚡ TÌM NHANH
+                            </span>
+                          )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-lexend font-black text-sm text-gray-800 leading-snug line-clamp-2"
-                            dangerouslySetInnerHTML={{ __html: item.htmlTitle }} />
-                          <p className="font-grotesk text-xs text-green-700 mt-0.5 truncate">{item.displayLink}</p>
-                          {item.snippet && <p className="font-grotesk text-xs text-gray-500 mt-1 line-clamp-2">{item.snippet}</p>}
+
+                        {/* Title */}
+                        <h3 className="font-lexend font-black text-sm text-gray-900 leading-snug line-clamp-2">
+                          {cleanTitle || 'Tài liệu không có tiêu đề'}
+                        </h3>
+
+                        {/* Source URL */}
+                        <p className="font-grotesk text-xs text-green-700 truncate font-semibold">
+                          🌐 {item.displayLink}
+                        </p>
+
+                        {/* Snippet */}
+                        {item.snippet && (
+                          <p className="font-grotesk text-xs text-gray-500 line-clamp-2 leading-relaxed">
+                            {item.snippet}
+                          </p>
+                        )}
+
+                        {/* Action buttons */}
+                        <div className="flex gap-2 mt-auto pt-1">
+                          <a
+                            href={item.link}
+                            target="_blank"
+                            rel="noreferrer"
+                            className={`${item.isSearchShortcut ? 'w-full' : 'flex-1'} flex items-center justify-center gap-2 py-2.5 bg-yellow-400 hover:bg-yellow-300 border-2 border-black rounded-2xl font-lexend font-black text-sm transition-all shadow-[3px_3px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] text-black`}
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            {item.isSearchShortcut ? 'Mở danh sách' : 'Xem tài liệu'}
+                          </a>
+                          {!item.isSearchShortcut && (
+                            <button
+                              onClick={() => handleImportDocument(item)}
+                              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-green-400 hover:bg-green-300 border-2 border-black rounded-2xl font-lexend font-black text-sm transition-all shadow-[3px_3px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] text-black"
+                            >
+                              📌 Lưu vào Web
+                            </button>
+                          )}
                         </div>
                       </div>
-                      <div className="flex gap-2 mt-4">
-                        <a href={item.link} target="_blank" rel="noreferrer"
-                          className="flex-1 flex items-center justify-center gap-2 py-2 bg-yellow-400 hover:bg-yellow-300 border-2 border-black rounded-xl font-lexend font-black text-sm transition-all shadow-[2px_2px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] text-black">
-                          <ExternalLink className="w-4 h-4" /> Xem tài liệu
-                        </a>
-                        <button
-                          onClick={() => handleImportDocument(item)}
-                          className="flex-1 flex items-center justify-center gap-2 py-2 bg-green-400 hover:bg-green-300 border-2 border-black rounded-xl font-lexend font-black text-sm transition-all shadow-[2px_2px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] text-black"
-                        >
-                          📌 Lưu vào Web
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             )}
           </>
         )}
       </div>
+
 
       {showModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">

@@ -2,47 +2,40 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
-import { ArrowLeft, Search, FileText, Upload, BookOpen, GraduationCap, X, ExternalLink, Globe } from 'lucide-react';
+import { ArrowLeft, Search, FileText, Upload, BookOpen, GraduationCap, X, ExternalLink, Database, Server, Users, Award, Download } from 'lucide-react';
 import NotificationBell from '../components/NotificationBell';
 
 const BLOCKS = ['Tất cả', 'Kinh tế', 'Kỹ thuật'];
 const EXAM_TYPES = ['Tất cả', 'Giữa kỳ', 'Cuối kỳ'];
-const SEARCH_FORMATS = [
+const DOCUMENT_TYPES = ['Tất cả', 'Giáo trình', 'Ghi chú', 'Slide', 'Đề thi', 'Bài tập', 'Báo cáo', 'Khóa luận'];
+const LEGAL_SOURCES = [
   {
-    label: 'PDF',
-    querySuffix: 'filetype:pdf',
-    snippet: 'Danh sách kết quả Google đã lọc riêng các tệp PDF.',
+    title: 'Sinh viên đóng góp',
+    description: 'Nhận tài liệu do người dùng có quyền chia sẻ gửi lên và đưa vào hàng chờ duyệt.',
+    Icon: Users,
+    action: 'Upload ngay',
+    type: 'upload',
   },
   {
-    label: 'DOCX',
-    querySuffix: 'filetype:docx',
-    snippet: 'Danh sách kết quả Google đã lọc riêng các tệp Word .docx.',
+    title: 'Học liệu mở',
+    description: 'Liên kết nhanh đến các kho học liệu mở để đội ngũ kiểm duyệt bổ sung tài liệu hợp pháp.',
+    Icon: Database,
+    action: 'Xem nguồn',
+    href: 'https://openstax.org/',
   },
   {
-    label: 'DOC',
-    querySuffix: 'filetype:doc',
-    snippet: 'Danh sách kết quả Google đã lọc riêng các tệp Word .doc.',
-  },
-  {
-    label: 'DRIVE',
-    querySuffix: '(site:drive.google.com OR site:docs.google.com)',
-    snippet: 'Danh sách tài liệu được chia sẻ qua Google Drive hoặc Google Docs.',
+    title: 'Kho trường công khai',
+    description: 'Tập trung luận văn, khóa luận và nghiên cứu từ các thư viện số công khai.',
+    Icon: Server,
+    action: 'Xem mẫu nguồn',
+    href: 'https://dspace.org/',
   },
 ];
-
-const getGoogleSearchUrl = (query) => `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-
-const buildSearchShortcutResults = (query) => SEARCH_FORMATS.map(format => {
-  const searchQuery = `${query} ${format.querySuffix}`;
-  return {
-    title: `${format.label}: ${query}`,
-    link: getGoogleSearchUrl(searchQuery),
-    displayLink: format.label === 'DRIVE' ? 'drive.google.com / docs.google.com' : 'google.com/search',
-    snippet: format.snippet,
-    fileType: format.label,
-    isSearchShortcut: true,
-  };
-});
+const REWARD_RULES = [
+  { label: 'Upload được duyệt', value: '+10', Icon: Upload },
+  { label: 'Tài liệu được tải', value: '+2', Icon: Download },
+  { label: 'Đánh giá tốt', value: '+5', Icon: Award },
+];
 
 export default function TaiLieu() {
   const { user } = useAuth();
@@ -52,14 +45,12 @@ export default function TaiLieu() {
   const [block, setBlock] = useState('Tất cả');
   const [examType, setExamType] = useState('Tất cả');
   const [localSearch, setLocalSearch] = useState('');
-  const [googleQuery, setGoogleQuery] = useState('');
-  const [googleBlock, setGoogleBlock] = useState('Tất cả');
-  const [googleExamType, setGoogleExamType] = useState('Tất cả');
-  const [googleResults, setGoogleResults] = useState([]);
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const [googleNotice, setGoogleNotice] = useState('');
+  const [documentQuery, setDocumentQuery] = useState('');
+  const [documentType, setDocumentType] = useState('Tất cả');
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [previewItem, setPreviewItem] = useState(null);
+  const [rightsConfirmed, setRightsConfirmed] = useState(false);
   const [form, setForm] = useState({ title: '', subject: '', block: 'Kinh tế', exam_type: 'Giữa kỳ', file_url: '', description: '' });
 
   const fetchDocuments = async () => {
@@ -83,134 +74,45 @@ export default function TaiLieu() {
     return matchSearch && matchBlock && matchExam;
   });
 
-  const handleGoogleSearch = async () => {
-    if (!googleQuery.trim()) return;
-    setGoogleLoading(true);
-    setGoogleNotice('');
-    setGoogleResults([]);
-
-    // Construct search query dynamically
-    let query = `đề thi ${googleQuery.trim()}`;
-    if (googleExamType && googleExamType !== 'Tất cả') {
-      query += ` ${googleExamType}`;
-    }
-    if (googleBlock && googleBlock !== 'Tất cả') {
-      if (!googleQuery.toLowerCase().includes(googleBlock.toLowerCase())) {
-        query += ` ${googleBlock}`;
-      }
-    }
-
-    // Direct Google query targeting word, pdf, and drive links
-    const primaryQuery = `${query} (filetype:pdf OR filetype:docx OR filetype:doc OR site:drive.google.com OR site:docs.google.com)`;
-    const apiKey = import.meta.env.VITE_GOOGLE_API_KEY || import.meta.env.VITE_GOOGLE_SEARCH_API_KEY;
-    const engineId = import.meta.env.VITE_GOOGLE_CX || import.meta.env.VITE_GOOGLE_SEARCH_ENGINE_ID;
-
-    try {
-      if (!apiKey || !engineId) {
-        setGoogleNotice('Chưa cấu hình Google Search API, nên đang hiển thị các nguồn tìm nhanh theo đúng định dạng tài liệu.');
-        setGoogleResults(buildSearchShortcutResults(query));
-        return;
-      }
-
-      // 1. Try search with format query
-      let res = await fetch(
-        `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${engineId}&q=${encodeURIComponent(primaryQuery)}&num=10`
-      );
-      let data = await res.json();
-
-      // if (data.error) {
-      //   setGoogleNotice('Google Search API đang hết quota, nên đang hiển thị các nguồn tìm nhanh theo đúng định dạng tài liệu.');
-      //   setGoogleResults(buildSearchShortcutResults(query));
-      //   return;
-      // }
-
-      // 2. Fallback: if no PDFs/Word/Drive found, search without strict formats
-      if (!data.items || data.items.length === 0) {
-        res = await fetch(
-          `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${engineId}&q=${encodeURIComponent(query)}&num=10`
-        );
-        data = await res.json();
-      }
-
-      // if (data.error) {
-      //   setGoogleNotice('Google Search API đang hết quota, nên đang hiển thị các nguồn tìm nhanh theo đúng định dạng tài liệu.');
-      //   setGoogleResults(buildSearchShortcutResults(query));
-      //   return;
-      // }
-
-      // if (!data.items || data.items.length === 0) {
-      //   setGoogleNotice('Chưa tìm thấy kết quả trực tiếp, nên đang hiển thị các nguồn tìm nhanh theo đúng định dạng tài liệu.');
-      //   setGoogleResults(buildSearchShortcutResults(query));
-      //   return;
-      // }
-
-      // Validate that at least one item matches the file format criteria
-      const validItems = data.items.filter(isValidFileLink);
-      if (validItems.length === 0) {
-        setGoogleNotice('Kết quả trực tiếp chưa có PDF, Word hoặc Drive, nên đang hiển thị các nguồn tìm nhanh theo đúng định dạng tài liệu.');
-        setGoogleResults(buildSearchShortcutResults(query));
-        return;
-      }
-
-      setGoogleResults(validItems);
-    } catch {
-      setGoogleNotice('Không kết nối được Google Search API, nên đang hiển thị các nguồn tìm nhanh theo đúng định dạng tài liệu.');
-      setGoogleResults(buildSearchShortcutResults(query));
-    } finally {
-      setGoogleLoading(false);
-    }
+  const getDocumentType = (doc) => {
+    const text = `${doc.title || ''} ${doc.exam_type || ''} ${doc.description || ''}`.toLowerCase();
+    if (text.includes('giáo trình')) return 'Giáo trình';
+    if (text.includes('ghi chú') || text.includes('note')) return 'Ghi chú';
+    if (text.includes('slide') || text.includes('ppt')) return 'Slide';
+    if (text.includes('bài tập') || text.includes('assignment')) return 'Bài tập';
+    if (text.includes('báo cáo') || text.includes('thực tập')) return 'Báo cáo';
+    if (text.includes('khóa luận') || text.includes('luận văn')) return 'Khóa luận';
+    if (text.includes('đề') || text.includes('giữa kỳ') || text.includes('cuối kỳ')) return 'Đề thi';
+    return 'Tài liệu';
   };
 
-  const isValidFileLink = (url) => {
-    if (!url) return false;
-    const low = url.toLowerCase();
-    const isPdf = low.endsWith('.pdf') || low.includes('.pdf');
-    const isWord = low.endsWith('.doc') || low.endsWith('.docx') || low.includes('.doc?') || low.includes('.docx?') || low.includes('/document/d/');
-    const isDrive = low.includes('drive.google.com') || low.includes('docs.google.com');
-    return isPdf || isWord || isDrive;
+  const documentResults = documents.filter(doc => {
+    const haystack = `${doc.title || ''} ${doc.subject || ''} ${doc.block || ''} ${doc.exam_type || ''} ${doc.description || ''}`.toLowerCase();
+    const matchSearch = !documentQuery || haystack.includes(documentQuery.toLowerCase());
+    const matchType = documentType === 'Tất cả' || getDocumentType(doc) === documentType;
+    return matchSearch && matchType;
+  });
+
+  const myApprovedDocuments = documents.filter(doc => doc.uploaded_by === user?.email);
+  const contributionPoints = myApprovedDocuments.length * 10;
+
+  const openUploadModal = () => {
+    setRightsConfirmed(false);
+    setShowModal(true);
   };
 
-  const isDisplayableSearchResult = (item) => item?.isSearchShortcut || isValidFileLink(item?.link);
-
-  const getFileTypeLabel = (item) => {
-    if (item?.fileType) return item.fileType;
-    const low = item?.link?.toLowerCase() || '';
-    if (low.includes('drive.google.com') || low.includes('docs.google.com')) return 'DRIVE';
-    if (low.includes('.docx')) return 'DOCX';
-    if (low.includes('.doc')) return 'DOC';
-    if (low.includes('.pdf')) return 'PDF';
-    return 'LINK';
-  };
-
-  const handleImportDocument = async (item) => {
-    if (!isValidFileLink(item.link)) {
-      alert('Chỉ chấp nhận các tệp tin định dạng PDF, Word (.doc, .docx) hoặc liên kết Google Drive!');
-      return;
-    }
-    try {
-      const cleanTitle = item.title.replace(/<\/?[^>]+(>|$)/g, "");
-      await base44.entities.Document.create({
-        title: cleanTitle,
-        subject: googleQuery || "Chưa rõ môn",
-        block: googleBlock === 'Tất cả' ? 'Kinh tế' : googleBlock,
-        exam_type: googleExamType === 'Tất cả' ? 'Giữa kỳ' : googleExamType,
-        file_url: item.link,
-        description: item.snippet || `Nguồn: ${item.displayLink}`,
-        uploaded_by: user?.email || 'anonymous',
-        status: 'approved',
-        created_date: new Date().toISOString(),
-      });
-      alert(`Đã lưu tài liệu "${cleanTitle}" vào kho tài liệu thành công!`);
-      fetchDocuments(); // Reload the community documents list
-    } catch (err) {
-      console.error('Failed to import document:', err);
-      alert('Lưu tài liệu thất bại, vui lòng thử lại sau.');
-    }
+  const closeUploadModal = () => {
+    setRightsConfirmed(false);
+    setShowModal(false);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.title || !form.file_url) return;
+    if (!rightsConfirmed) {
+      alert('Bạn cần xác nhận có quyền chia sẻ tài liệu này.');
+      return;
+    }
     setSubmitting(true);
     try {
       await base44.entities.Document.create({
@@ -228,7 +130,7 @@ export default function TaiLieu() {
           userEmail: user?.email || 'An danh',
         }),
       });
-      setShowModal(false);
+      closeUploadModal();
       setForm({ title: '', subject: '', block: 'Kinh tế', exam_type: 'Giữa kỳ', file_url: '', description: '' });
       alert('Đã gửi tài liệu! Admin sẽ duyệt sớm.');
     } catch {
@@ -238,8 +140,6 @@ export default function TaiLieu() {
     }
   };
 
-  const visibleGoogleResults = googleResults.filter(isDisplayableSearchResult);
-
   return (
     <div className="min-h-screen bg-[#FFFDF5]">
       <div className="bg-yellow-400 border-b-4 border-black px-4 py-4 sticky top-0 z-10">
@@ -248,7 +148,7 @@ export default function TaiLieu() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <span className="font-lexend font-black text-xl flex-1">📚 Tài liệu học tập</span>
-          <button onClick={() => setShowModal(true)}
+          <button onClick={openUploadModal}
             className="flex items-center gap-2 px-4 py-2 bg-black text-yellow-400 rounded-xl font-lexend font-black text-sm hover:bg-gray-800 transition-colors">
             <Upload className="w-4 h-4" /> Góp tài liệu
           </button>
@@ -257,14 +157,14 @@ export default function TaiLieu() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
-        <div className="flex gap-2 bg-white border-2 border-black rounded-2xl p-1.5 w-fit">
+        <div className="flex flex-wrap gap-2 bg-white border-2 border-black rounded-2xl p-1.5 w-fit">
           <button onClick={() => setTab('local')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl font-lexend font-black text-sm transition-all ${tab === 'local' ? 'bg-black text-yellow-400' : 'hover:bg-yellow-50'}`}>
             <FileText className="w-4 h-4" /> Tài liệu cộng đồng
           </button>
-          <button onClick={() => setTab('search')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-lexend font-black text-sm transition-all ${tab === 'search' ? 'bg-black text-yellow-400' : 'hover:bg-yellow-50'}`}>
-            <Globe className="w-4 h-4" /> Tìm trên Internet
+          <button onClick={() => setTab('document')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-lexend font-black text-sm transition-all ${tab === 'document' ? 'bg-black text-yellow-400' : 'hover:bg-yellow-50'}`}>
+            <FileText className="w-4 h-4" /> Document
           </button>
         </div>
 
@@ -307,18 +207,15 @@ export default function TaiLieu() {
                 <div className="text-5xl mb-3">📭</div>
                 <p className="font-lexend font-bold text-gray-500">Chưa có tài liệu nào</p>
                 <p className="font-grotesk text-gray-400 text-sm mt-1">Hãy là người đầu tiên góp tài liệu!</p>
-                <button onClick={() => {
-                  setGoogleQuery(localSearch);
-                  setTab('search');
-                }}
+                <button onClick={() => setTab('document')}
                   className="mt-4 px-4 py-2 bg-black text-yellow-400 rounded-xl font-lexend font-black text-sm">
-                  Tìm trên Internet →
+                  Xem Document →
                 </button>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {filtered.map(doc => (
-                  <div key={doc.id} className="bg-white border-2 border-black rounded-2xl p-5 shadow-[3px_3px_0px_black] hover:shadow-[5px_5px_0px_black] hover:-translate-y-0.5 transition-all space-y-3">
+                  <div key={doc.id} onClick={() => setPreviewItem(doc)} className="bg-white border-2 border-black rounded-2xl p-5 shadow-[3px_3px_0px_black] hover:shadow-[5px_5px_0px_black] hover:-translate-y-0.5 transition-all space-y-3 cursor-pointer">
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 bg-rose-100 border-2 border-black rounded-xl flex items-center justify-center shrink-0">
                         <FileText className="w-5 h-5 text-rose-500" />
@@ -333,7 +230,7 @@ export default function TaiLieu() {
                       <span className="px-2 py-0.5 bg-blue-100 border border-blue-400 rounded-full text-xs font-bold text-blue-700">{doc.exam_type}</span>
                     </div>
                     {doc.description && <p className="font-grotesk text-xs text-gray-500 line-clamp-2">{doc.description}</p>}
-                    <a href={doc.file_url} target="_blank" rel="noreferrer"
+                    <a href={doc.file_url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
                       className="flex items-center justify-center gap-2 w-full py-2.5 bg-yellow-400 hover:bg-yellow-300 border-2 border-black rounded-xl font-lexend font-black text-sm transition-all shadow-[2px_2px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
                       <ExternalLink className="w-4 h-4" /> Xem tài liệu
                     </a>
@@ -344,130 +241,189 @@ export default function TaiLieu() {
           </>
         )}
 
-        {tab === 'search' && (
-          <>
-            <div className="bg-white border-2 border-black rounded-2xl p-5 shadow-[3px_3px_0px_black] space-y-4">
-              <p className="font-lexend font-black text-base">🔍 Tìm tài liệu trên Internet</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-lexend font-black text-xs mb-1">Khối ngành</label>
-                  <select value={googleBlock} onChange={e => setGoogleBlock(e.target.value)}
-                    className="w-full border-2 border-black rounded-xl p-2.5 font-grotesk text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400">
-                    <option>Tất cả</option>
-                    <option>Kinh tế</option>
-                    <option>Kỹ thuật</option>
-                  </select>
+        {tab === 'document' && (
+          <div className="space-y-5">
+            <section className="overflow-hidden rounded-2xl border-2 border-black bg-black text-white shadow-[4px_4px_0px_#facc15]">
+              <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[1.3fr_0.7fr]">
+                <div className="space-y-4">
+                  <div className="inline-flex items-center gap-2 rounded-xl bg-yellow-400 px-3 py-1.5 font-lexend text-xs font-black text-black">
+                    <FileText className="h-4 w-4" />
+                    Document Hub
+                  </div>
+                  <div>
+                    <h2 className="font-lexend text-2xl font-black leading-tight sm:text-3xl">
+                      Kho chia sẻ tài liệu hợp pháp cho sinh viên
+                    </h2>
+                    <p className="mt-2 max-w-2xl font-grotesk text-sm leading-relaxed text-white/75">
+                      Tìm tài liệu đã duyệt, upload tài liệu của bạn, tích điểm đóng góp và để admin kiểm duyệt trước khi phát hành.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={openUploadModal}
+                      className="inline-flex items-center gap-2 rounded-xl border-2 border-yellow-400 bg-yellow-400 px-4 py-2 font-lexend text-sm font-black text-black transition-all hover:bg-yellow-300"
+                    >
+                      <Upload className="h-4 w-4" />
+                      Upload tài liệu
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDocumentQuery('');
+                        setDocumentType('Tất cả');
+                      }}
+                      className="inline-flex items-center gap-2 rounded-xl border-2 border-white/30 bg-white/10 px-4 py-2 font-lexend text-sm font-black text-white transition-all hover:bg-white/20"
+                    >
+                      <Search className="h-4 w-4" />
+                      Xem tất cả
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <label className="block font-lexend font-black text-xs mb-1">Loại đề</label>
-                  <select value={googleExamType} onChange={e => setGoogleExamType(e.target.value)}
-                    className="w-full border-2 border-black rounded-xl p-2.5 font-grotesk text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400">
-                    <option>Tất cả</option>
-                    <option>Giữa kỳ</option>
-                    <option>Cuối kỳ</option>
-                  </select>
+
+                <div className="grid grid-cols-3 gap-2 lg:grid-cols-1">
+                  {[
+                    { label: 'Tài liệu', value: documents.length, Icon: FileText },
+                    { label: 'Đã góp', value: myApprovedDocuments.length, Icon: Users },
+                    { label: 'Điểm', value: contributionPoints, Icon: Award },
+                  ].map(({ label, value, Icon }) => (
+                    <div key={label} className="rounded-xl border border-white/15 bg-white/10 p-3">
+                      <Icon className="h-4 w-4 text-yellow-300" />
+                      <p className="mt-2 font-lexend text-2xl font-black">{value}</p>
+                      <p className="font-grotesk text-xs font-bold text-white/60">{label}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="flex gap-2">
-                <input type="text" value={googleQuery} onChange={e => setGoogleQuery(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleGoogleSearch()}
-                  placeholder="Nhập tên môn học... (VD: Kinh tế vi mô)"
-                  className="flex-1 border-2 border-black rounded-xl p-3 font-grotesk text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400" />
-                <button onClick={handleGoogleSearch} disabled={googleLoading}
-                  className="px-5 py-3 bg-black text-yellow-400 rounded-xl font-lexend font-black text-sm hover:bg-gray-800 disabled:opacity-50 transition-colors">
-                  {googleLoading ? '⏳' : '🔍'}
-                </button>
-              </div>
-              <p className="font-grotesk text-xs text-gray-400">
-                Tìm kiếm: "đề thi {googleExamType} {googleQuery || '...'} {googleBlock} filetype:pdf"
-              </p>
-            </div>
+            </section>
 
-            {googleLoading && (
-              <div className="flex flex-col items-center py-10 gap-3">
-                <div className="text-4xl animate-bounce">🔍</div>
-                <p className="font-grotesk text-gray-400 text-sm">Đang tìm kiếm tài liệu...</p>
-              </div>
-            )}
+            <section className="grid gap-4 lg:grid-cols-[1fr_0.85fr]">
+              <div className="rounded-2xl border-2 border-black bg-white p-4 shadow-[3px_3px_0px_black]">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="font-lexend text-lg font-black">Tìm tài liệu</h3>
+                    <p className="font-grotesk text-sm text-gray-500">Tìm trong kho đã được duyệt.</p>
+                  </div>
+                  <Search className="h-5 w-5 text-gray-400" />
+                </div>
 
-            {googleNotice && !googleLoading && (
-              <div className="bg-yellow-50 border-2 border-black rounded-2xl p-4 shadow-[2px_2px_0px_black] flex items-start gap-3">
-                <span className="text-xl shrink-0">💡</span>
-                <p className="font-grotesk text-sm text-gray-700 leading-relaxed">{googleNotice}</p>
-              </div>
-            )}
+                <div className="mt-4 space-y-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      value={documentQuery}
+                      onChange={e => setDocumentQuery(e.target.value)}
+                      placeholder="Nhập môn học, tiêu đề, từ khóa..."
+                      className="w-full rounded-xl border-2 border-black py-3 pl-10 pr-3 font-grotesk text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                    />
+                  </div>
 
-            {visibleGoogleResults.length > 0 && (
-              <>
-                <p className="font-grotesk text-sm text-gray-500">
-                  Tìm thấy <span className="font-bold text-black">{visibleGoogleResults.length}</span> nguồn tài liệu
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {visibleGoogleResults.map((item, i) => {
-                    const fileType = getFileTypeLabel(item);
-                    const cleanTitle = (item.title || '').replace(/<\/?[^>]+(>|$)/g, '');
-                    const iconBg = fileType === 'PDF' ? 'bg-rose-100' : fileType === 'DRIVE' ? 'bg-green-100' : 'bg-blue-100';
-                    const iconColor = fileType === 'PDF' ? 'text-rose-500' : fileType === 'DRIVE' ? 'text-green-500' : 'text-blue-500';
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {DOCUMENT_TYPES.map(type => (
+                      <button
+                        key={type}
+                        onClick={() => setDocumentType(type)}
+                        className={`shrink-0 rounded-xl border-2 px-3 py-1.5 font-lexend text-xs font-black transition-all ${documentType === type ? 'border-black bg-black text-yellow-400' : 'border-black bg-white hover:bg-yellow-50'}`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-                    return (
-                      <div key={i} className="bg-white border-2 border-black rounded-2xl p-5 shadow-[3px_3px_0px_black] hover:shadow-[5px_5px_0px_black] hover:-translate-y-0.5 transition-all space-y-3">
-                        {/* Header row: icon + title */}
-                        <div className="flex items-start gap-3">
-                          <div className={`w-10 h-10 ${iconBg} border-2 border-black rounded-xl flex items-center justify-center shrink-0`}>
-                            <FileText className={`w-5 h-5 ${iconColor}`} />
+                <div className="mt-4 space-y-3">
+                  {loading ? (
+                    <div className="rounded-2xl border-2 border-dashed border-gray-300 py-10 text-center">
+                      <p className="font-grotesk text-sm text-gray-400">Đang tải kho tài liệu...</p>
+                    </div>
+                  ) : documentResults.length === 0 ? (
+                    <div className="rounded-2xl border-2 border-dashed border-gray-300 py-10 text-center">
+                      <p className="font-lexend font-bold text-gray-500">Chưa có tài liệu phù hợp</p>
+                      <button onClick={openUploadModal}
+                        className="mt-3 rounded-xl bg-black px-4 py-2 font-lexend text-sm font-black text-yellow-400">
+                        Góp tài liệu này
+                      </button>
+                    </div>
+                  ) : (
+                    documentResults.slice(0, 6).map(doc => (
+                      <div key={doc.id} onClick={() => setPreviewItem(doc)} className="cursor-pointer rounded-2xl border-2 border-black bg-[#FFFDF5] p-4 transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_black]">
+                        <div className="flex gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-black bg-yellow-400">
+                            <FileText className="h-5 w-5" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-lexend font-black text-sm text-gray-800 leading-snug line-clamp-2">
-                              {cleanTitle || 'Tài liệu không có tiêu đề'}
-                            </h3>
-                            <p className="font-grotesk text-xs text-gray-500 mt-0.5 truncate">{item.displayLink}</p>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h4 className="font-lexend text-sm font-black leading-tight text-black">{doc.title}</h4>
+                              <span className="rounded-full bg-blue-100 px-2 py-0.5 font-grotesk text-[11px] font-bold text-blue-700">
+                                {getDocumentType(doc)}
+                              </span>
+                            </div>
+                            <p className="mt-1 font-grotesk text-xs text-gray-500">{doc.subject || 'Chưa rõ môn'} · {doc.block || 'Chưa phân loại'} · {doc.exam_type || 'Tài liệu'}</p>
                           </div>
-                        </div>
-
-                        {/* Badges */}
-                        <div className="flex flex-wrap gap-1.5">
-                          <span className="px-2 py-0.5 bg-yellow-100 border border-yellow-400 rounded-full text-xs font-bold text-yellow-700">
-                            {fileType}
-                          </span>
-                          {item.isSearchShortcut && (
-                            <span className="px-2 py-0.5 bg-purple-100 border border-purple-400 rounded-full text-xs font-bold text-purple-700">
-                              Tìm nhanh
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Snippet */}
-                        {item.snippet && (
-                          <p className="font-grotesk text-xs text-gray-500 line-clamp-2">{item.snippet}</p>
-                        )}
-
-                        {/* Buttons */}
-                        <div className="flex gap-2">
-                          <a
-                            href={item.link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className={`${item.isSearchShortcut ? 'w-full' : 'flex-1'} flex items-center justify-center gap-2 py-2.5 bg-yellow-400 hover:bg-yellow-300 border-2 border-black rounded-xl font-lexend font-black text-sm transition-all shadow-[2px_2px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]`}
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                            {item.isSearchShortcut ? 'Mở danh sách' : 'Xem tài liệu'}
+                          <a href={doc.file_url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-black bg-white hover:bg-yellow-50">
+                            <ExternalLink className="h-4 w-4" />
                           </a>
-                          {!item.isSearchShortcut && (
-                            <button
-                              onClick={() => handleImportDocument(item)}
-                              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-black hover:bg-gray-800 border-2 border-black rounded-xl font-lexend font-black text-sm text-yellow-400 transition-all shadow-[2px_2px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]"
-                            >
-                              📌 Lưu vào Web
-                            </button>
-                          )}
                         </div>
                       </div>
-                    );
-                  })}
+                    ))
+                  )}
                 </div>
-              </>
-            )}
-          </>
+              </div>
+
+              <div className="space-y-4">
+                <div className="rounded-2xl border-2 border-black bg-white p-4 shadow-[3px_3px_0px_black]">
+                  <h3 className="font-lexend text-lg font-black">Nguồn hợp pháp</h3>
+                  <div className="mt-3 space-y-3">
+                    {LEGAL_SOURCES.map(source => {
+                      const Icon = source.Icon;
+                      return (
+                        <div key={source.title} className="rounded-xl border-2 border-black bg-[#FFFDF5] p-3">
+                          <div className="flex gap-3">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-yellow-400">
+                              <Icon className="h-5 w-5" />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-lexend text-sm font-black">{source.title}</p>
+                              <p className="mt-1 font-grotesk text-xs text-gray-500">{source.description}</p>
+                              {source.type === 'upload' ? (
+                                <button onClick={openUploadModal} className="mt-2 font-lexend text-xs font-black text-yellow-700 underline">
+                                  {source.action}
+                                </button>
+                              ) : (
+                                <a href={source.href} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 font-lexend text-xs font-black text-yellow-700 underline">
+                                  {source.action}
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border-2 border-black bg-white p-4 shadow-[3px_3px_0px_black]">
+                  <h3 className="font-lexend text-lg font-black">Điểm thưởng</h3>
+                  <div className="mt-3 grid gap-2">
+                    {REWARD_RULES.map(rule => {
+                      const Icon = rule.Icon;
+                      return (
+                        <div key={rule.label} className="flex items-center justify-between rounded-xl border-2 border-black bg-yellow-50 px-3 py-2">
+                          <span className="flex items-center gap-2 font-grotesk text-sm font-bold text-gray-700">
+                            <Icon className="h-4 w-4" />
+                            {rule.label}
+                          </span>
+                          <span className="font-lexend text-sm font-black text-black">{rule.value}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+          </div>
         )}
       </div>
 
@@ -477,7 +433,7 @@ export default function TaiLieu() {
           <div className="bg-white border-4 border-black rounded-3xl p-6 w-full max-w-md shadow-[8px_8px_0px_black] max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-lexend font-black text-xl">📤 Góp tài liệu</h2>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+              <button onClick={closeUploadModal} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -524,11 +480,41 @@ export default function TaiLieu() {
                   placeholder="Năm học, ghi chú thêm..." rows={2}
                   className="w-full border-2 border-black rounded-2xl p-3 font-grotesk text-sm resize-none focus:outline-none focus:ring-2 focus:ring-yellow-400" />
               </div>
-              <button type="submit" disabled={submitting}
+              <label className="flex items-start gap-3 rounded-2xl border-2 border-black bg-yellow-50 p-3">
+                <input
+                  type="checkbox"
+                  checked={rightsConfirmed}
+                  onChange={e => setRightsConfirmed(e.target.checked)}
+                  className="mt-1 h-4 w-4 accent-yellow-400"
+                />
+                <span className="font-grotesk text-sm font-bold text-gray-700">
+                  Tôi có quyền chia sẻ tài liệu này và đồng ý để admin kiểm duyệt trước khi công khai.
+                </span>
+              </label>
+              <button type="submit" disabled={submitting || !rightsConfirmed}
                 className="w-full py-3 bg-yellow-400 hover:bg-yellow-300 border-2 border-black rounded-2xl font-lexend font-black text-base transition-all shadow-[3px_3px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] disabled:opacity-50">
                 {submitting ? '⏳ Đang gửi...' : '📤 Gửi tài liệu'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+      {previewItem && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setPreviewItem(null)}>
+          <div className="bg-[#FFF7C6] border-4 border-black rounded-2xl p-5 w-full max-w-2xl shadow-[8px_8px_0px_black] max-h-[90vh] overflow-y-auto relative" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setPreviewItem(null)} className="absolute top-3 right-3 p-2 hover:bg-gray-100 rounded-xl transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="font-lexend font-black text-lg leading-tight">{(previewItem.title || previewItem.name) || 'Tài liệu'}</h3>
+            {previewItem.subject && <p className="font-grotesk text-sm text-gray-700 mt-2">Môn: {previewItem.subject}</p>}
+            <p className="font-grotesk text-sm text-gray-700 mt-3 line-clamp-4">{previewItem.snippet || previewItem.description || previewItem.summary || 'Không có mô tả'}</p>
+
+            <div className="mt-5">
+              <a href={previewItem.link || previewItem.file_url} target="_blank" rel="noreferrer" onClick={() => setPreviewItem(null)}
+                className="block w-full text-center py-3 bg-yellow-400 hover:bg-yellow-300 border-2 border-black rounded-2xl font-lexend font-black text-sm transition-all shadow-[2px_2px_0px_black]">
+                <ExternalLink className="inline w-4 h-4 mr-2" /> Xem tài liệu
+              </a>
+            </div>
           </div>
         </div>
       )}

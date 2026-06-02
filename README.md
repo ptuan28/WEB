@@ -10,7 +10,7 @@
 
 > **Hỏi bài ẩn danh · Trả lời ẩn danh · Không cần đăng nhập 🤫**
 
-![Demo](assets/demo.png)
+![Demo](assets/anh.png)
 
 ## 🌐 Demo trực tuyến
 

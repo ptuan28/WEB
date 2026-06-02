@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { ArrowLeft, Search, FileText, Upload, BookOpen, GraduationCap, X, ExternalLink, Database, Server, Users, Award, Download } from 'lucide-react';
 import NotificationBell from '../components/NotificationBell';
+import FileUploadField from '../components/FileUploadField';
 
 const BLOCKS = ['Tất cả', 'Kinh tế', 'Kỹ thuật'];
 const EXAM_TYPES = ['Tất cả', 'Giữa kỳ', 'Cuối kỳ'];
@@ -51,7 +52,15 @@ export default function TaiLieu() {
   const [submitting, setSubmitting] = useState(false);
   const [previewItem, setPreviewItem] = useState(null);
   const [rightsConfirmed, setRightsConfirmed] = useState(false);
-  const [form, setForm] = useState({ title: '', subject: '', block: 'Kinh tế', exam_type: 'Giữa kỳ', file_url: '', description: '' });
+  const [form, setForm] = useState({
+    title: '',
+    subject: '',
+    block: 'Kinh tế',
+    exam_type: 'Giữa kỳ',
+    // Khi upload file lên sẽ nhận được URL để lưu vào document
+    file_url: '',
+    description: '',
+  });
 
   const fetchDocuments = async () => {
     setLoading(true);
@@ -131,7 +140,14 @@ export default function TaiLieu() {
         }),
       });
       closeUploadModal();
-      setForm({ title: '', subject: '', block: 'Kinh tế', exam_type: 'Giữa kỳ', file_url: '', description: '' });
+      setForm({
+        title: '',
+        subject: '',
+        block: 'Kinh tế',
+        exam_type: 'Giữa kỳ',
+        file_url: '',
+        description: '',
+      });
       alert('Đã gửi tài liệu! Admin sẽ duyệt sớm.');
     } catch {
       alert('Gửi thất bại, thử lại sau.');
@@ -150,7 +166,7 @@ export default function TaiLieu() {
           <span className="font-lexend font-black text-xl flex-1">📚 Tài liệu học tập</span>
           <button onClick={openUploadModal}
             className="flex items-center gap-2 px-4 py-2 bg-black text-yellow-400 rounded-xl font-lexend font-black text-sm hover:bg-gray-800 transition-colors">
-            <Upload className="w-4 h-4" /> Góp tài liệu
+            <Upload className="w-4 h-4" /> Góp tài liệu (file/link)
           </button>
           <NotificationBell />
         </div>
@@ -366,7 +382,7 @@ export default function TaiLieu() {
                         </div>
                       </div>
                     ))
-                  )}
+                  )}  
                 </div>
               </div>
 
@@ -468,11 +484,27 @@ export default function TaiLieu() {
                   </select>
                 </div>
               </div>
-              <div>
-                <label className="block font-lexend font-black text-sm mb-1">Link tài liệu <span className="text-rose-500">*</span></label>
-                <input type="url" value={form.file_url} onChange={e => setForm(p => ({ ...p, file_url: e.target.value }))}
-                  placeholder="https://drive.google.com/..." required
-                  className="w-full border-2 border-black rounded-2xl p-3 font-grotesk text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+              <div className="space-y-2">
+                <label className="block font-lexend font-black text-sm mb-1">Tải file hoặc dán link tài liệu <span className="text-rose-500">*</span></label>
+
+                <FileUploadField
+                  onFileUploaded={(res) => {
+                    // res: { url, name } hoặc null
+                    if (!res?.url) return;
+                    setForm(p => ({ ...p, file_url: res.url }));
+                  }}
+                />
+
+                <div>
+                  <input
+                    type="url"
+                    value={form.file_url}
+                    onChange={e => setForm(p => ({ ...p, file_url: e.target.value }))}
+                    placeholder="Hoặc dán https://drive.google.com/..." 
+                    required
+                    className="w-full border-2 border-black rounded-2xl p-3 font-grotesk text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block font-lexend font-black text-sm mb-1">Mô tả thêm</label>

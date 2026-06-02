@@ -1,5 +1,4 @@
-# 🐔 The Chicken's Whisper
-
+﻿# 🐔 The Chicken's Whisper
 
 ![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react)
 ![Vite](https://img.shields.io/badge/Vite-6-646CFF?style=for-the-badge&logo=vite)
@@ -8,17 +7,81 @@
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/Platform-Web-blue?style=for-the-badge)
 
-> **Hỏi bài ẩn danh · Trả lời ẩn danh · Không cần đăng nhập 🤫**
+> Ứng dụng hỏi đáp ẩn danh cho học sinh, sinh viên: đặt câu hỏi, trả lời và bình luận mà không cần hiển thị danh tính.
 
 ![Demo](assets/anh.png)
 
-## 🌐 Demo trực tuyến
+## Mục lục
 
-👉 **Dùng thử ngay — không cần đăng ký!**
+- [Giới thiệu](#giới-thiệu)
+- [Ý nghĩa & ứng dụng](#ý-nghĩa--ứng-dụng)
+- [Chức năng chính](#chức-năng-chính)
+- [Yêu cầu và phân tích](#yêu-cầu-và-phân-tích)
+- [Kiến trúc và thiết kế](#kiến-trúc-và-thiết-kế)
+- [Cấu trúc dự án](#cấu-trúc-dự-án)
+- [Cài đặt và chạy](#cài-đặt-và-chạy)
+- [Cấu hình môi trường](#cấu-hình-môi-trường)
+- [Bảo mật và kiểm thử](#bảo-mật-và-kiểm-thử)
+- [License](#license)
 
 ---
 
-## 🛠️ Tech Stack
+## Giới thiệu
+
+`The Chicken's Whisper` là nền tảng hỏi đáp ẩn danh dành cho học sinh, sinh viên, cho phép:
+
+- đặt câu hỏi theo trường/ngành/khóa học,
+- trả lời câu hỏi và bình luận,
+- nhận thông báo khi có hoạt động liên quan,
+- xem lại lịch sử hoạt động.
+
+Ứng dụng xây dựng bằng React + Vite với backend Base44 BaaS và tập trung vào trải nghiệm mượt mà, phản hồi nhanh và tính riêng tư.
+
+## Ý nghĩa & ứng dụng
+
+Ứng dụng hướng tới:
+
+- hỗ trợ chia sẻ tài liệu học tập, giải đáp bài tập,
+- tạo môi trường thảo luận ẩn danh để học sinh cởi mở hơn,
+- giảm rào cản giao tiếp trong lớp học và nhóm học.
+
+## Chức năng chính
+
+1. Đặt câu hỏi ẩn danh
+2. Trả lời câu hỏi ẩn danh
+3. Bình luận vào câu trả lời
+4. Tìm kiếm và lọc câu hỏi theo trường/ngành/khóa
+5. Nhận thông báo khi có trả lời mới
+6. Xem lịch sử hoạt động cá nhân
+7. Quản lý nội dung xấu / report
+
+## Yêu cầu và phân tích
+
+### Yêu cầu chức năng
+
+- Người dùng có thể xem danh sách câu hỏi.
+- Người dùng có thể đặt câu hỏi mới.
+- Người dùng có thể trả lời và bình luận.
+- Người dùng có thể lọc, tìm kiếm và duyệt câu hỏi.
+- Người dùng được nhắc báo khi có hoạt động mới.
+- Người dùng có thể xem lịch sử câu hỏi/trả lời của bản thân.
+
+### Yêu cầu phi chức năng
+
+- Giao diện thân thiện, phản hồi nhanh.
+- Tương thích trình duyệt web hiện đại.
+- Bảo mật thông tin người dùng và dữ liệu ẩn danh.
+- Khả năng chịu tải hệ thống vừa phải.
+
+### Đối tượng sử dụng
+
+- Học sinh, sinh viên cần hỏi bài.
+- Giáo viên và trợ giảng tạo môi trường trò chuyện an toàn.
+- Nhóm học tập muốn chia sẻ tài liệu và kiến thức.
+
+## Kiến trúc và thiết kế
+
+### Tech stack
 
 | Layer     | Công nghệ                            |
 |-----------|--------------------------------------|
@@ -29,68 +92,21 @@
 | Storage   | Base44 Entity DB + localStorage      |
 | File      | Base44 File Upload                   |
 
----
+### Tổng quan hệ thống
 
-## 🚀 Chạy dự án
+- Frontend React điều hướng với `react-router-dom`.
+- Mô hình xác thực và quản lý người dùng dùng Base44 Auth.
+- Cơ sở dữ liệu Entities tại Base44 lưu `Question`, `Answer`, `Comment`, `Notification`.
+- Tính năng upload ảnh hỗ trợ minh họa câu hỏi/trả lời.
 
-**Bước 1 — Clone**
-```bash
-git clone https://github.com/ptuan28/WEB.git
-cd WEB
-```
+### Thành phần chính
 
-**Bước 2 — Cài dependencies**
-```bash
-npm install
-```
+- `src/pages/`: trang Home, chi tiết câu hỏi, lịch sử, báo lỗi, tài liệu, admin tài liệu.
+- `src/components/`: các module giao diện như `QuestionCard`, `AnswerCard`, `CommentSection`, `FilterBar`, `AskQuestionModal`, `NotificationBell`.
+- `src/lib/`: logic hỗ trợ danh tính ẩn danh, lưu lịch sử localStorage, dữ liệu trường/ngành.
+- `src/api/base44Client.js`: khởi tạo kết nối Base44.
 
-**Bước 3 — Cấu hình môi trường**
-git log --all --full-history -- a.env
-Tạo file `.env.local`:
-```
-VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=https://api.base44.com
-VITE_BASE44_API_KEY=your_api_key
-```
-
-**Bước 4 — Chạy**
-```bash
-npm run dev
-# Mở trình duyệt tại http://localhost:5173
-```
-
----
-
-## 📁 Cấu trúc dự án
-
-```
-PROJECT/
-├── src/
-│   ├── pages/
-│   │   ├── Home.jsx              # Trang chủ - danh sách câu hỏi
-│   │   ├── QuestionDetail.jsx    # Chi tiết câu hỏi + trả lời
-│   │   └── MyHistory.jsx         # Lịch sử hoạt động
-│   ├── components/
-│   │   ├── AskQuestionModal.jsx  # Modal đặt câu hỏi
-│   │   ├── QuestionCard.jsx      # Card câu hỏi
-│   │   ├── AnswerCard.jsx        # Card câu trả lời
-│   │   ├── CommentSection.jsx    # Phần bình luận
-│   │   ├── FilterBar.jsx         # Thanh lọc/tìm kiếm
-│   │   ├── NotificationBell.jsx  # Chuông thông báo
-│   │   └── ImageCapture.jsx      # Chụp/tải ảnh
-│   ├── lib/
-│   │   ├── anonymousUser.js      # Tạo danh tính ẩn danh
-│   │   ├── userHistory.js        # Lưu lịch sử localStorage
-│   │   └── schoolData.js         # Dữ liệu trường/ngành VN
-│   └── api/
-│       └── base44Client.js       # Khởi tạo Base44 SDK
-├── .env.local                    # Biến môi trường (không commit)
-└── README.md
-```
-
----
-
-## 🗂️ UML & Kiến trúc hệ thống
+## UML & Kiến trúc hệ thống
 
 ### 1. Entity Diagram (Class Diagram)
 
@@ -174,7 +190,7 @@ flowchart LR
     Admin --> UC9
 ```
 
-### 3. Sequence Diagram (Luồng đặt câu hỏi & trả lời)
+### 3. Sequence Diagram
 
 ```mermaid
 sequenceDiagram
@@ -202,9 +218,9 @@ sequenceDiagram
 ```mermaid
 flowchart TB
     subgraph FE["FRONTEND (React + Vite)"]
-        Pages["Pages: Home | QuestionDetail | MyHistory"]
-        Components["Components: QuestionCard | AnswerCard | CommentSection\nFilterBar | AskModal | NotificationBell"]
-        Libs["Libs: anonymousUser | userHistory | schoolData"]
+        Pages["Pages: Home | QuestionDetail | MyHistory | BugReport | TaiLieu | AdminTaiLieu"]
+        Components["QuestionCard | AnswerCard | CommentSection | FilterBar | AskQuestionModal | NotificationBell"]
+        Libs["anonymousUser | userHistory | schoolData"]
     end
 
     subgraph BE["BASE44 BACKEND (BaaS)"]
@@ -212,62 +228,92 @@ flowchart TB
         Entity["Entity CRUD API"]
         Integration["Integrations API"]
         DB["Database: Question | Answer | Comment | Notification"]
-        RLS["RLS: Row Level Security"]
+        RLS["Row Level Security"]
     end
 
     FE -->|HTTP / REST| BE
 ```
 
-### 5. UI/UX Flow
+---
 
-```mermaid
-flowchart TD
-    Home["🏠 Trang chủ /"]
-    Home --> Filter["Tìm kiếm / Lọc"]
-    Home --> Detail["/question/:id"]
-    Home --> Modal["Modal đặt câu hỏi"]
-    Home --> Bell["🔔 Thông báo"]
-    Home --> History["/history"]
+## Cấu trúc dự án
 
-    Detail --> ViewAnswer["Xem câu trả lời"]
-    Detail --> WriteAnswer["Viết câu trả lời"]
-    Detail --> Comment["Bình luận / Report"]
-
-    History --> MyQ["Tab: Câu hỏi của tôi"]
-    History --> MyA["Tab: Câu trả lời của tôi"]
+```text
+PROJECT/
+├── src/
+│   ├── api/
+│   │   └── base44Client.js
+│   ├── components/
+│   │   ├── AnswerCard.jsx
+│   │   ├── AskQuestionModal.jsx
+│   │   ├── CommentSection.jsx
+│   │   ├── FilterBar.jsx
+│   │   ├── Footer.jsx
+│   │   ├── ImageCapture.jsx
+│   │   ├── NotificationBell.jsx
+│   │   ├── ProtectedRoute.jsx
+│   │   ├── QuestionCard.jsx
+│   │   ├── UserNotRegisteredError.jsx
+│   │   └── ui/
+│   ├── lib/
+│   │   ├── AuthContext.jsx
+│   │   ├── anonymousUser.js
+n    │   ├── app-params.js
+│   │   ├── base44.js
+│   │   ├── PageNotFound.jsx
+│   │   ├── query-client.js
+│   │   ├── schoolData.js
+│   │   └── userHistory.js
+│   ├── pages/
+│   │   ├── AdminTaiLieu.jsx
+│   │   ├── BugReport.jsx
+│   │   ├── Home.jsx
+│   │   ├── MyHistory.jsx
+│   │   ├── QuestionDetail.jsx
+│   │   ├── TaiLieu.jsx
+│   │   └── index.css
+│   └── App.jsx
+├── public/
+├── assets/
+├── package.json
+└── README.md
 ```
 
----
+## Cài đặt và chạy
 
-## 🔐 Bảo mật
+```bash
+git clone https://github.com/ptuan28/WEB.git
+cd PROJECT
+npm install
+npm run dev
+```
 
-| Thao tác             | Điều kiện                              |
-|----------------------|----------------------------------------|
-| Tạo câu hỏi/trả lời  | Đã đăng nhập                           |
-| Đọc Notification     | `user_email == user.email` hoặc admin  |
-| Xóa Comment          | `created_by == user.email` hoặc admin  |
-| Auto-xóa nội dung    | `report_count >= 5`                    |
+Mở trình duyệt tại `http://localhost:5173`.
 
----
+## Cấu hình môi trường
 
-## 🧠 Kỹ thuật OOP trong dự án
+Tạo file `.env.local` với nội dung:
 
-Dù dùng React (functional), dự án vẫn thể hiện rõ các nguyên lý OOP:
+```env
+VITE_BASE44_APP_ID=your_app_id
+VITE_BASE44_APP_BASE_URL=https://api.base44.com
+VITE_BASE44_API_KEY=your_api_key
+RESEND_API_KEY=your_resend_key
+```
 
-**1. Đóng gói (Encapsulation)**
-Mỗi component quản lý state và logic riêng. Ví dụ: `AnswerCard` đóng gói logic report, xóa bên trong — bên ngoài chỉ cần truyền `answer` và `onDelete`.
+> Nếu thiếu cấu hình, ứng dụng sẽ hiển thị thông báo yêu cầu cấu hình môi trường.
 
-**2. Trừu tượng hóa (Abstraction)**
-`anonymousUser.js`, `userHistory.js`, `schoolData.js` trừu tượng hóa logic phức tạp thành các hàm đơn giản. Component cha không cần biết bên trong hoạt động thế nào.
+## Bảo mật và kiểm thử
 
-**3. Tái sử dụng (Reusability)**
-`NotificationBell` dùng ở cả `Home` và `QuestionDetail`. `ImageCapture` dùng ở cả modal hỏi và form trả lời. `getAnonIdentity` dùng ở nhiều component.
+- Kiểm soát truy cập theo `created_by` và `user.email`.
+- Report nội dung xấu tăng `report_count` và có thể bật cơ chế xóa tự động.
+- Dữ liệu cá nhân chỉ lưu trữ khi cần thiết; nhiều tương tác vẫn ẩn danh.
+- Kiểm thử chính:
+  - xác thực Base44,
+  - tạo câu hỏi/trả lời,
+  - lọc/tìm kiếm,
+  - thông báo và lịch sử hoạt động.
 
-**4. Kết hợp (Composition)**
-`QuestionDetail` → `AnswerCard` → `CommentSection`. Các component nhỏ lắp ghép thành UI phức tạp, thay vì kế thừa (inheritance).
+## License
 
----
-
-## 📄 License
-
-MIT © 2025 The Chicken's Whisper Team
+MIT License

@@ -1,8 +1,8 @@
-﻿import { useState, useRef } from 'react';
-import { Camera, Upload, X, Loader2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+﻿import { useState, useRef } from "react";
+import { Camera, Upload, X, Loader2 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 
-export default function ImageCapture({ onImage, label = "Đính kèm ảnh" }) {
+export default function ImageCapture({ onImage }) {
   const [preview, setPreview] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -13,7 +13,7 @@ export default function ImageCapture({ onImage, label = "Đính kèm ảnh" }) {
   const uploadToBase44 = async (dataUrl) => {
     setUploading(true);
     const blob = await (await fetch(dataUrl)).blob();
-    const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
+    const file = new File([blob], "image.jpg", { type: "image/jpeg" });
     const res = await base44.integrations.Core.UploadFile({ file });
     setUploading(false);
     return res.file_url;
@@ -32,11 +32,11 @@ export default function ImageCapture({ onImage, label = "Đính kèm ảnh" }) {
   };
 
   const capturePhoto = async () => {
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
-    canvas.getContext('2d').drawImage(videoRef.current, 0, 0);
-    const dataUrl = canvas.toDataURL('image/jpeg');
+    canvas.getContext("2d").drawImage(videoRef.current, 0, 0);
+    const dataUrl = canvas.toDataURL("image/jpeg");
     setPreview(dataUrl);
     stopCamera();
     const url = await uploadToBase44(dataUrl);

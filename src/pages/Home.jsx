@@ -1,15 +1,12 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import QuestionCard from '../components/QuestionCard';
 import FilterBar from '../components/FilterBar';
 import AskQuestionModal from '../components/AskQuestionModal';
-import { Link } from "react-router-dom";
-import { useAuth } from "@/lib/AuthContext";
+import { Link } from 'react-router-dom';
 import NotificationBell from '../components/NotificationBell';
 
 export default function Home() {
-  const { user, isAuthenticated, navigateToLogin, logout } = useAuth();
-  const ADMIN_EMAIL = "25112120@st.vju.ac.vn";
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -48,28 +45,7 @@ export default function Home() {
       {/* Hero */}
       <div className="bg-yellow-400 border-b-4 border-black px-4 py-8 md:py-12">
         <div className="max-w-3xl mx-auto flex justify-end mb-2">
-          <div className="flex items-center gap-2">
-            <NotificationBell />
-            {isAuthenticated ? (
-              <div className="flex items-center gap-2">
-                {user?.email === ADMIN_EMAIL && (
-                  <Link to="/admin/tai-lieu"
-                    className="px-3 py-2 bg-black text-yellow-400 rounded-xl font-lexend font-black text-sm hover:bg-gray-800 transition-all">
-                    ⚙️ Admin
-                  </Link>
-                )}
-                <button onClick={() => logout()}
-                  className="px-3 py-2 bg-white border-2 border-black rounded-xl font-lexend font-black text-sm hover:bg-gray-100 transition-all">
-                  Đăng xuất
-                </button>
-              </div>
-            ) : (
-              <button onClick={navigateToLogin}
-                className="px-3 py-2 bg-black text-yellow-400 rounded-xl font-lexend font-black text-sm hover:bg-gray-800 transition-all">
-                Đăng nhập
-              </button>
-            )}
-          </div>
+          <NotificationBell />
         </div>
         <div className="max-w-3xl mx-auto text-center">
           <div className="text-6xl md:text-8xl mb-2">🐔</div>

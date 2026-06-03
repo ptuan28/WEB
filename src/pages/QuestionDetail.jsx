@@ -47,24 +47,15 @@ export default function QuestionDetail() {
         image_url = res.file_url;
       }
 
-      const answerRes = await fetch('/api/answer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question_id: questionId,
-          text: answerText,
-          image_url: image_url || undefined,
-          file_url: attachedFile?.url || undefined,
-          file_name: attachedFile?.name || undefined,
-          report_count: 0,
-          created_by: getAnonUserId(),
-        }),
+      const answer = await base44.entities.Answer.create({
+        question_id: questionId,
+        text: answerText,
+        image_url: image_url || undefined,
+        file_url: attachedFile?.url || undefined,
+        file_name: attachedFile?.name || undefined,
+        report_count: 0,
+        created_by: getAnonUserId(),
       });
-      if (!answerRes.ok) {
-        const err = await answerRes.json();
-        throw new Error(err.error || 'Gửi thất bại');
-      }
-      const answer = await answerRes.json();
       saveMyAnswer(answer.id);
 
       try {

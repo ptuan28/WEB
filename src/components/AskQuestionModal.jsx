@@ -4,6 +4,7 @@ import { X, Send } from 'lucide-react';
 import ImageCapture from './ImageCapture';
 import { ALL_SCHOOLS, getMajorsBySchool, COHORTS } from '../lib/schoolData';
 import { saveMyQuestion } from '../lib/userHistory';
+import { getAnonUserId } from '../lib/anonymousUser';
 
 export default function AskQuestionModal({ onClose, onSuccess }) {
   const [text, setText] = useState('');
@@ -42,6 +43,7 @@ export default function AskQuestionModal({ onClose, onSuccess }) {
       subject: subject || undefined,
       image_url: image_url || undefined,
       report_count: 0,
+      created_by: getAnonUserId(),
     });
     saveMyQuestion(q.id);
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
 import { Flag, MessageCircle, ChevronDown, ChevronUp, Paperclip } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -8,6 +9,7 @@ import { getAnonIdentity } from '../lib/anonymousUser';
 
 export default function AnswerCard({ answer, onDelete, questionCreatedBy }) {
   const [comments, setComments] = useState([]);
+  const [lightbox, setLightbox] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
 
@@ -37,7 +39,32 @@ export default function AnswerCard({ answer, onDelete, questionCreatedBy }) {
   return (
     <div className="bg-white border-2 border-black rounded-2xl p-4 shadow-[3px_3px_0px_black]">
       {answer.image_url && (
-        <img src={answer.image_url} alt="answer" className="w-full max-h-52 object-contain rounded-xl border-2 border-black mb-3 bg-gray-50" />
+        <>
+          <img
+            src={answer.image_url}
+            alt="answer"
+            onClick={() => setLightbox(true)}
+            className="w-full max-h-52 object-contain rounded-xl border-2 border-black mb-3 bg-gray-50 cursor-zoom-in hover:opacity-90 transition-opacity"
+          />
+          {lightbox && createPortal(
+            <div
+              style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+              onClick={() => setLightbox(false)}
+            >
+              <img
+                src={answer.image_url}
+                alt="full"
+                style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: '16px', border: '4px solid white' }}
+                onClick={e => e.stopPropagation()}
+              />
+              <button
+                style={{ position: 'absolute', top: '16px', right: '16px', background: 'white', border: '2px solid black', borderRadius: '50%', width: '36px', height: '36px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                onClick={() => setLightbox(false)}
+              >✕</button>
+            </div>,
+            document.body
+          )}
+        </>
       )}
 
       {answer.file_url && (

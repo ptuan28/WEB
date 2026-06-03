@@ -6,9 +6,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import AnswerCard from '../components/AnswerCard';
 import NotificationBell from '../components/NotificationBell';
-import { getAnonIdentity } from '../lib/anonymousUser';
+import { getAnonIdentity, getAnonUserId } from '../lib/anonymousUser';
 import { saveMyAnswer } from '../lib/userHistory';
-import { getAnonUserId } from '../lib/anonymousUser';
 import ImageCapture from '../components/ImageCapture';
 import FileUpload from '../components/FileUpload';
 
@@ -40,37 +39,36 @@ export default function QuestionDetail() {
     if (!answerText.trim()) return;
     setSubmitting(true);
     try {
+      let image_url = null;
+      if (imageData) {
+        const blob = await (await fetch(imageData)).blob();
+        const file = new File([blob], 'answer.jpg', { type: 'image/jpeg' });
+        const res = await base44.integrations.Core.UploadFile({ file });
+        image_url = res.file_url;
+      }
 
-    let image_url = null;
-    if (imageData) {
-      const blob = await (await fetch(imageData)).blob();
-      const file = new File([blob], 'answer.jpg', { type: 'image/jpeg' });
-      const res = await base44.integrations.Core.UploadFile({ file });
-      image_url = res.file_url;
-    }
+      const answerRes = await fetch('/api/answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question_id: questionId,
+          text: answerText,
+          image_url: image_url || undefined,
+          file_url: attachedFile?.url || undefined,
+          file_name: attachedFile?.name || undefined,
+          report_count: 0,
+          created_by: getAnonUserId(),
+        }),
+      });
+      if (!answerRes.ok) {
+        const err = await answerRes.json();
+        throw new Error(err.error || 'Gửi thất bại');
+      }
+      const answer = await answerRes.json();
+      saveMyAnswer(answer.id);
 
-    const answerRes = await fetch('/api/answer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        question_id: questionId,
-        text: answerText,
-        image_url: image_url || undefined,
-        file_url: attachedFile?.url || undefined,
-        file_name: attachedFile?.name || undefined,
-        report_count: 0,
-      }),
-    });
-    if (!answerRes.ok) {
-      const err = await answerRes.json();
-      throw new Error(err.error || 'Gửi thất bại');
-    }
-    const answer = await answerRes.json();
-    saveMyAnswer(answer.id);
-    if (question.created_by) {
       try {
-        const me = await base44.auth.me();
-        if (me.email !== question.created_by) {
+        if (question.created_by) {
           await base44.entities.Notification.create({
             user_email: question.created_by,
             type: 'answer',
@@ -80,7 +78,6 @@ export default function QuestionDetail() {
           });
         }
       } catch {}
-    }
 
       setAnswers(prev => [...prev, answer]);
       setAnswerText('');

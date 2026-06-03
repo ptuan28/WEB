@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
@@ -13,7 +13,7 @@ export default function AdminTaiLieu() {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ title: '', subject: '', block: 'Kinh tế', exam_type: 'Giữa kỳ', file_url: '', description: '' });
 
-  const ADMIN_EMAIL = 'fantuan0203@gmail.com';
+  const ADMIN_EMAIL = '25112120@st.vju.ac.vn';
 
   useEffect(() => {
     if (user?.email !== ADMIN_EMAIL) return;

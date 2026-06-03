@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { ArrowLeft, Send, Flag } from 'lucide-react';
@@ -40,18 +40,10 @@ export default function QuestionDetail() {
     setSubmitting(true);
 
     try {
-      let image_url = null;
-      if (imageData) {
-        const blob = await (await fetch(imageData)).blob();
-        const file = new File([blob], 'answer.jpg', { type: 'image/jpeg' });
-        const res = await base44.integrations.Core.UploadFile({ file });
-        image_url = res.file_url;
-      }
-
       const answer = await base44.entities.Answer.create({
         question_id: questionId,
         text: answerText,
-        image_url: image_url || undefined,
+        image_url: imageData || undefined,
         file_url: attachedFile?.url || undefined,
         file_name: attachedFile?.name || undefined,
         report_count: 0,

@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react';
-import { getAnonIdentity } from '../lib/anonymousUser';
+import { getAnonIdentity, getAnonUserId } from '../lib/anonymousUser';
 import { base44 } from '@/api/base44Client';
 import { Flag, Send } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -23,7 +23,7 @@ export default function CommentSection({ answerId, comments, setComments, questi
 
     setLoading(true);
     try {
-      const comment = await base44.entities.Comment.create({ answer_id: answerId, text, report_count: 0 });
+      const comment = await base44.entities.Comment.create({ answer_id: answerId, text, report_count: 0, created_by: getAnonUserId() });
 
       if (comment) { // Đảm bảo comment đã được tạo thành công
         setComments(prev => [...prev, comment]);

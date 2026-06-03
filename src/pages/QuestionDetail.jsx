@@ -39,43 +39,60 @@ export default function QuestionDetail() {
     if (!answerText.trim()) return;
     setSubmitting(true);
 
-    let image_url = null;
-    if (imageData) {
-      const blob = await (await fetch(imageData)).blob();
-      const file = new File([blob], 'answer.jpg', { type: 'image/jpeg' });
-      const res = await base44.integrations.Core.UploadFile({ file });
-      image_url = res.file_url;
-    }
+    try {
+      let image_url = null;
+      if (imageData) {
+        const blob = await (await fetch(imageData)).blob();
+        const file = new File([blob], 'answer.jpg', { type: 'image/jpeg' });
+        const res = await base44.integrations.Core.UploadFile({ file });
+        image_url = res.file_url;
+      }
 
-    const answer = await base44.entities.Answer.create({
-      question_id: questionId,
-      text: answerText,
-      image_url: image_url || undefined,
-      file_url: attachedFile?.url || undefined,
-      file_name: attachedFile?.name || undefined,
-      report_count: 0,
-    });
-    saveMyAnswer(answer.id);
-    if (question.created_by) {
-      try {
-        const me = await base44.auth.me();
-        if (me.email !== question.created_by) {
-          await base44.entities.Notification.create({
-            user_email: question.created_by,
-            type: 'answer',
-            question_id: questionId,
-            message: `Có người vừa trả lời câu hỏi của bạn: "${question.text.slice(0, 60)}${question.text.length > 60 ? '...' : ''}"`,
-            read: false,
-          });
+      const answer = await base44.entities.Answer.create({
+        question_id: questionId,
+        text: answerText,
+        image_url: image_url || undefined,
+        file_url: attachedFile?.url || undefined,
+        file_name: attachedFile?.name || undefined,
+        report_count: 0,
+      });
+
+      saveMyAnswer(answer.id);
+
+      if (question.created_by) {
+        try {
+          let myEmail = null;
+          try {
+            const me = await base44.auth.me();
+            myEmail = me?.email ?? null;
+          } catch {
+            // Người dùng ẩn danh, không có session
+          }
+
+          if (myEmail !== question.created_by) {
+            await base44.entities.Notification.create({
+              user_email: question.created_by,
+              type: 'answer',
+              question_id: questionId,
+              message: `Có người vừa trả lời câu hỏi của bạn: "${question.text.slice(0, 60)}${question.text.length > 60 ? '...' : ''}"`,
+              read: false,
+            });
+          }
+        } catch {
+          // Notification fail cũng không sao
         }
-      } catch {}
-    }
+      }
 
-    setAnswers(prev => [...prev, answer]);
-    setAnswerText('');
-    setImageData(null);
-    setAttachedFile(null);
-    setSubmitting(false);
+      setAnswers(prev => [...prev, answer]);
+      setAnswerText('');
+      setImageData(null);
+      setAttachedFile(null);
+    } catch (err) {
+      console.error('Lỗi khi gửi câu trả lời:', err);
+      alert('Gửi thất bại! Vui lòng thử lại.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleReportQuestion = async () => {

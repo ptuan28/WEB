@@ -183,10 +183,10 @@ flowchart LR
     Guest --> UC2
     Guest --> UC3
     Guest --> UC4
-    User --> UC5
-    User --> UC6
-    User --> UC7
-    User --> UC8
+    Guest --> UC5
+    Guest --> UC6
+    Guest --> UC7
+    Guest --> UC8
     Admin --> UC9
 ```
 

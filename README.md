@@ -164,7 +164,7 @@ classDiagram
 ```mermaid
 flowchart LR
     Guest([👤 Khách ẩn danh])
-    User([👤 User đăng nhập])
+    
     Admin([👤 Admin])
 
     subgraph App["The Chicken's Whisper"]
